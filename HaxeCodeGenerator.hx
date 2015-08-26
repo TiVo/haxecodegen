@@ -85,6 +85,59 @@ class HaxeCodeGenerator
             return 0;
         }
 
+        Sys.println("Using random seed: " + Options.randomSeed);
+        Random.seed(Options.randomSeed);
+
+        // Make the output directory as needed
+        try {
+            if (sys.FileSystem.isDirectory(Options.outdir)) {
+                Util.err("Refusing to overwrite existing output directory " +
+                    Options.outdir);
+                return -1;
+            }
+        }
+        catch (e : Dynamic) {
+        }
+
+        try {
+            sys.FileSystem.createDirectory(Options.outdir);
+        }
+        catch (e : Dynamic) {
+            Util.err("Failed to create output directory " + Options.outdir +
+                ": " + e);
+            return -1;
+        }
+
+        // Create classes
+        GenClass.generate();
+
+        // Create interfaces
+        GenInterface.generate();
+
+        // Create enums
+        GenEnum.generate();
+        
+        // Create anonymous classes
+
+        // Define class hierarchy
+        GenClass.createHierarchy();
+        
+        // Define interface hierarchy
+        GenInterface.createHierarchy();
+
+        // Define class implementations of interfaces
+
+
+        // Emit classes
+        GenClass.emit();
+
+        // Emit interfaces
+        GenInterface.emit();
+
+        // Emit enums
+
+        // Emit the build scripts
+
         return 0;
     }
 }
