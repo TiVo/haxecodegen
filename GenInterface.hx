@@ -25,6 +25,7 @@ class GenInterface
     public var _extends(default, null) : Array<GenInterface>;
     public var maxdepth(default, null) : Int;
     public var functions(default, null) : Array<GenFunction>;
+    public var properties(default, null) : Array<GenField>;
 
     public static function generate()
     {
@@ -65,6 +66,13 @@ class GenInterface
         }
     }
 
+    public static function createProperties()
+    {
+        for (geninterface in gInterfaces) {
+            geninterface.createThisProperties();
+        }
+    }
+
     public static function emit()
     {
         for (geninterface in gInterfaces) {
@@ -78,7 +86,7 @@ class GenInterface
             return true;
         }
         for (extended in this._extends) {
-            if (i.isOrExtendsInterface(extended)) {
+            if (extended.isOrExtendsInterface(i)) {
                 return true;
             }
         }
@@ -144,6 +152,7 @@ class GenInterface
         this._extends = [ ];
         this.maxdepth = 0;
         this.functions = [ ];
+        this.properties = [ ];
         mFunctionMap = new haxe.ds.StringMap<GenFunction>();
     }
 
@@ -209,6 +218,15 @@ class GenInterface
         }
     }
 
+    private function createThisProperties()
+    {
+        var pct = 10;
+        while (Random.chance(pct)) {
+            pct = Std.int((pct * 9) / 10);
+            this.properties.push(new GenField(true));
+        }
+    }
+
     private function emitThis()
     {
         var path = (Options.outdir + "/" + this._package + "/" +
@@ -229,6 +247,10 @@ class GenInterface
         }
 
         mOut.writeString("\n{\n");
+
+        for (p in this.properties) {
+            p.emit(mOut);
+        }
 
         for (f in this.functions) {
             f.emit(mOut);

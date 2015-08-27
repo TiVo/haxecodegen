@@ -107,5 +107,19 @@ class Util
         }
     }
 
+    public static function randomAccessor() : Accessor
+    {
+        switch (Random.random() % 3) {
+        case 0:
+            return GetSet;
+        case 1:
+            return GetNull;
+        case 2: 
+            return NullSet;
+        }
+
+        throw "Internal error - randomAccessor uses wrong mod";
+    }
+
     private static var gIndents : Array<String> = [ "" ];
 }

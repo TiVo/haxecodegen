@@ -131,6 +131,9 @@ class HaxeCodeGenerator
         // Define class functions
         GenClass.createFunctions();
 
+        // Define interface properties
+        GenInterface.createProperties();
+
         // Define class fields
         GenClass.createFields();
 

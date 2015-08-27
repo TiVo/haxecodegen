@@ -22,12 +22,20 @@ class GenField
     public var name(default, null) : String;
     public var _static(default, null) : Bool;
     public var type(default, null) : GenType;
+    public var accessor(default, null) : Null<Accessor>;
 
-    public function new()
+    public function new(ofInterface : Bool)
     {
         this.name = "field" + gNextNumber++;
-        this._static = Random.chance(10);
+        this._static = ofInterface ? false : Random.chance(10);
         this.type = Util.randomType();
+        // Could be a property
+        if (ofInterface || Random.chance(10)) {
+            this.accessor = Util.randomAccessor();
+        }
+        else {
+            this.accessor = null;
+        }
     }
 
     public function emit(o : haxe.io.Output)
@@ -35,7 +43,55 @@ class GenField
         mOut = o;
 
         outi(4, "public " + (this._static ? "static " : "") + "var " +
-             this.name + " : " + Util.typeString(this.type) + ";\n");
+             this.name);
+
+        if (this.accessor != null) {
+            out("(");
+            switch (this.accessor) {
+            case GetSet:
+                out("get, set");
+            case GetNull:
+                out("get, null");
+            case NullSet:
+                out("null, set");
+            }
+            out(")");
+        }
+
+        out(" : " + Util.typeString(this.type) + ";\n");
+
+        mOut = null;
+    }
+
+    public function emitAccessorFunctions(o : haxe.io.Output)
+    {
+        mOut = o;
+
+        var typeString = Util.typeString(this.type);
+        var staticString = this._static ? "static " : "";
+
+        switch (this.accessor) {
+        case GetSet, GetNull:
+            out("\n");
+            outi(4, "private " + staticString + "function get_" + this.name
+                 + "() : " + typeString + "\n");
+            outi(4, "{\n");
+            outi(8, "    return " + 
+                 Util.constantToString(Util.randomConstant(this.type)) + ";\n");
+            outi(4, "}\n");
+        default:
+        }
+
+        switch (this.accessor) {
+        case GetSet, NullSet:
+            out("\n");
+            outi(4, "private " + staticString + "function set_" + this.name +
+                 "(v : " + typeString + ") : " + typeString + "\n");
+            outi(4, "{\n");
+            outi(8, "    return v;\n");
+            outi(4, "}\n");
+        default:
+        }            
 
         mOut = null;
     }

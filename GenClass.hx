@@ -115,7 +115,10 @@ class GenClass
                 return true;
             }
         }
-        return false;
+        if (this._super == null) {
+            return false;
+        }
+        return this._super.implementsInterface(i);
     }
 
     public function findFunction(name : String) : Null<GenFunction>
@@ -296,12 +299,10 @@ class GenClass
 
     private function createThisFields()
     {
-        // No properties yet ...
-        
         var pct = 95;
         while (Random.chance(pct)) {
             pct = Std.int((pct * 9) / 10);
-            this.fields.push(new GenField());
+            this.fields.push(new GenField(false));
         }
     }
 
@@ -318,7 +319,7 @@ class GenClass
                     this.name + ".hx");
 
         try {
-            this.mOut = sys.io.File.write(path);
+            mOut = sys.io.File.write(path);
         }
         catch (e : Dynamic) {
             Util.err("failed to write output file " + path + ": " + e);
@@ -337,6 +338,19 @@ class GenClass
         }
 
         out("\n{\n");
+
+        // Collect properties to implement
+        var props = new Array<GenField>();
+        this.collectPropertiesToImplement(this._implements, props);
+
+        // Now emit all interface property definitions as needed
+        for (p in props) {
+            p.emit(mOut);
+        }
+
+        if (props.length > 0) {
+            out("\n");
+        }
 
         // If this is Main, then emit a main function
         if (this.name == "Main") {
@@ -385,10 +399,36 @@ class GenClass
             f.emit(mOut);
         }
 
+        // Now emit all property functions as needed
+        for (p in props) {
+            p.emitAccessorFunctions(mOut);
+        }
+        for (f in this.fields) {
+            if (f.accessor != null) {
+                f.emitAccessorFunctions(mOut);
+            }
+        }
+
         out("}\n");
 
         mOut.close();
         mOut = null;
+    }
+
+    private function collectPropertiesToImplement
+        (implemented : Array<GenInterface>, out : Array<GenField>)
+    {
+        for (i in implemented) {
+            // If there is not a superclass implementing this interface, then
+            // emit its properties
+            if ((this._super == null) ||
+                !this._super.implementsInterface(i)) {
+                for (p in i.properties) {
+                    out.push(p);
+                }
+            }
+            this.collectPropertiesToImplement(i._extends, out);
+        }
     }
 
     private inline function out(str : String)
