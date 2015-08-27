@@ -14,26 +14,6 @@
  * limitations under the License.
  **/
 
-/**
- * Represents a single generated enum
- **/
-class GenEnum
+enum GenStatement
 {
-    public static var gEnums : Array<GenEnum> = new Array<GenEnum>();
-
-    public var _package(default, null) : String;
-    public var name(default, null) : String;
-
-    public static function generate()
-    {
-        for (i in 0 ... Options.enumCount) {
-            gEnums.push(new GenEnum(i));
-        }
-    }
-
-    private function new(number : Int)
-    {
-        this._package = GenPackage.get();
-        this.name = "Enum" + number;
-    }
 }

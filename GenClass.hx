@@ -1,32 +1,31 @@
 /**
-* Copyright 2015 TiVo, Inc.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-**/
+ * Copyright 2015 TiVo, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
 
 /**
  * Represents a single generated class
  **/
 class GenClass
 {
-    public static var gClasses : Array<GenClass> = new Array<GenClass>();
-
     public var _package(default, null) : String;
     public var name(default, null) : String;
     public var fullname(default, null) : String;
     public var _super(default, null) : Null<GenClass>;
     public var _implements(default, null) : Array<GenInterface>;
     public var depth(default, null) : Int;
+    public var functions(default, null) : Array<GenFunction>;
 
     // Create the classes, with no inheritence hierarchy or other features
     public static function generate()
@@ -46,6 +45,8 @@ class GenClass
     // Define inheritence hierarchy for every class
     public static function createHierarchy()
     {
+        // Can't have any hierarchy if there aren't at least 2 classes to
+        // participate
         if (gClasses.length < 2) {
             return;
         }
@@ -70,23 +71,92 @@ class GenClass
         }
     }
 
-    public static function emit()
+    public static function createFunctions()
     {
         for (genclass in gClasses) {
-            genclass.emitThis();
+            genclass.createThisFunctions();
+        }
+    }
+
+    private function createThisFunctions()
+    {
+        // First, create any functions that need to be implemented from
+        // implemented interfaces
+        for (i in this._implements) {
+            this.createThisInterfaceFunctions(i);
+        }
+
+        // Now create some additional number of class-specific functions.
+        // Some should override functions in parent classes
+        var pct = 95;
+        while (true) {
+            if (!Random.chance(pct)) {
+                break;
+            }
+            pct *= 2;
+            pct = Std.int(pct / 3);
+            // Create a function.  33% chance of re-declaring one of its
+            // functions.
+            if ((this.depth > 0) && Random.chance(33)) {
+                // Pick a random superclass reimplement a function from
+                var w = (Random.random() % this.depth) + 1;
+                var c = this;
+                while (w > 0) {
+                    c = c._super;
+                    w -= 1;
+                }
+                // Now pick a random function from ifc to redeclare, if it has
+                // any (otherwise give up)
+                var toRedeclare = c.randomFunction();
+                if ((toRedeclare != null) &&
+                    !mFunctionMap.exists(toRedeclare.name)) {
+                    // Redeclare it in this interface
+                    var newf = new GenFunction().copySignature(toRedeclare);
+                    newf.makeBody();
+                    this.functions.push(newf);
+                    mFunctionMap.set(newf.name, newf);
+                    // Continue the outer while loop
+                    continue;
+                }
+            }
+            
+            // Generate a new function
+            var newf = new GenFunction().randomSignature();
+            newf.makeBody();
+            this.functions.push(newf);
+            mFunctionMap.set(newf.name, newf);
+        }
+    }
+
+    private function createThisInterfaceFunctions(i : GenInterface)
+    {
+        for (isuper in i._extends) {
+            this.createThisInterfaceFunctions(isuper);
+        }
+
+        for (f in i.functions) {
+            if (mFunctionMap.exists(f.name)) {
+                continue;
+            }
+            var thisf = new GenFunction().copySignature(f);
+            thisf.makeBody();
+            this.functions.push(thisf);
+            mFunctionMap.set(thisf.name, thisf);
         }
     }
 
     public function isOrExtendsClass(c : GenClass) : Bool
     {
+        var t = this;
+
         while (true) {
-            if (c == null) {
+            if (t == null) {
                 return false;
             }
-            if (c == this) {
+            if (c == t) {
                 return true;
             }
-            c = c._super;
+            t = t._super;
         }
     }
 
@@ -100,12 +170,52 @@ class GenClass
         return false;
     }
 
+    public function findFunction(name : String) : Null<GenFunction>
+    {
+        var found = mFunctionMap.get(name);
+
+        if (found != null) {
+            return found;
+        }
+
+        if (this._super == null) {
+            return null;
+        }
+
+        return this._super.findFunction(name);
+    }
+
     public static inline function randomClass() : GenClass
     {
         if (gClasses.length == 0) {
             return null;
         }
-        return gClasses[Random.random() % gClasses.length];
+        else if (gClasses.length == 1) {
+            return gClasses[0];
+        }
+        else {
+            return gClasses[Random.random() % gClasses.length];
+        }
+    }
+
+    public function randomFunction() : Null<GenFunction>
+    {
+        if (this.functions.length == 0) {
+            return null;
+        }
+        else if (this.functions.length == 1) {
+            return this.functions[0];
+        }
+        else {
+            return this.functions[Random.random() % this.functions.length];
+        }
+    }
+
+    public static function emit()
+    {
+        for (genclass in gClasses) {
+            genclass.emitThis();
+        }
     }
 
     private function new(number : Int)
@@ -121,8 +231,10 @@ class GenClass
             this.fullname = this._package + "." + this.name;
         }
         this._super = null;
-        this.depth = 0;
         this._implements = new Array<GenInterface>();
+        this.depth = 0;
+        this.functions = [ ];
+        mFunctionMap = new haxe.ds.StringMap<GenFunction>();
     }
 
     // Will fail to extend if it happens to hit this class or a class extending
@@ -161,7 +273,7 @@ class GenClass
                     return;
                 }
             }
-            if (toImplement.depth >= (Options.maxExtendsDepth - 1)) {
+            if (toImplement.maxdepth >= (Options.maxExtendsDepth - 1)) {
                 continue;
             }
             this._implements.push(toImplement);
@@ -223,6 +335,16 @@ class GenClass
         }
         outi(4, "}\n");
 
+        for (f in this.functions) {
+            // If the function is in a super class, then emit "override "
+            // as a prefix to the function
+            if ((this._super != null) && 
+                (this._super.findFunction(f.name) != null)) {
+                out("override ");
+            }
+            f.emit(mOut);
+        }
+
         out("}\n");
 
         mOut.close();
@@ -242,8 +364,11 @@ class GenClass
 
     private var mOut : haxe.io.Output;
 
+    private var mFunctionMap : haxe.ds.StringMap<GenFunction>;
+
+    private static var gClasses : Array<GenClass> = new Array<GenClass>();
+
     private static var gClassMap : haxe.ds.StringMap<GenClass> = 
         new haxe.ds.StringMap<GenClass>();
-
 }
 

@@ -47,5 +47,5 @@ generated code is:
 - EReg class
 
 The generated code is pure haxe with no target-specific characteristics and
-this should be applicable to evaluating every haxe target type (javascript,
+thus should be applicable to evaluating every haxe target type (javascript,
 hxcpp, neko, etc).
