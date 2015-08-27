@@ -70,5 +70,42 @@ class Util
         }
     }
 
+    public static function randomConstant(gt : GenType) : Constant
+    {
+        switch (gt) {
+        case GenTypeBool:
+            return ConstantBool(Random.chance(50));
+        case GenTypeInt:
+            return ConstantInt(Random.random());
+        case GenTypeFloat:
+            return ConstantFloat(((Random.chance(50) ? 1.0 : -1.0) *
+                                  Random.random()) / Random.random());
+        case GenTypeString:
+            return ConstantString(Random.identifier(false));
+        case GenTypeInterface(ifc):
+            // For now ...
+            return ConstantNull;
+        case GenTypeClass(cls):
+            // For now ...
+            return ConstantNull;
+        }
+    }
+
+    public static function constantToString(c : Constant) : String
+    {
+        switch (c) {
+        case ConstantNull:
+            return "null";
+        case ConstantBool(b):
+            return Std.string(b);
+        case ConstantInt(i):
+            return Std.string(i);
+        case ConstantFloat(f):
+            return Std.string(f);
+        case ConstantString(s):
+            return "\"" + s + "\"";
+        }
+    }
+
     private static var gIndents : Array<String> = [ "" ];
 }

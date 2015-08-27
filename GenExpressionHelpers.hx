@@ -14,7 +14,13 @@
  * limitations under the License.
  **/
 
-enum GenStatement
+class GenExpressionHelpers
 {
-    Return(expression : GenExpression);
+    public static function emit(stmt : GenExpression, out : haxe.io.Output)
+    {
+        switch (stmt) {
+        case Constant(c):
+            out.writeString(Util.constantToString(c));
+        }
+    }
 }

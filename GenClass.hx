@@ -26,6 +26,7 @@ class GenClass
     public var _implements(default, null) : Array<GenInterface>;
     public var depth(default, null) : Int;
     public var functions(default, null) : Array<GenFunction>;
+    public var fields(default, null) : Array<GenField>;
 
     // Create the classes, with no inheritence hierarchy or other features
     public static function generate()
@@ -78,70 +79,17 @@ class GenClass
         }
     }
 
-    private function createThisFunctions()
+    public static function createFields()
     {
-        // First, create any functions that need to be implemented from
-        // implemented interfaces
-        for (i in this._implements) {
-            this.createThisInterfaceFunctions(i);
-        }
-
-        // Now create some additional number of class-specific functions.
-        // Some should override functions in parent classes
-        var pct = 95;
-        while (true) {
-            if (!Random.chance(pct)) {
-                break;
-            }
-            pct *= 2;
-            pct = Std.int(pct / 3);
-            // Create a function.  33% chance of re-declaring one of its
-            // functions.
-            if ((this.depth > 0) && Random.chance(33)) {
-                // Pick a random superclass reimplement a function from
-                var w = (Random.random() % this.depth) + 1;
-                var c = this;
-                while (w > 0) {
-                    c = c._super;
-                    w -= 1;
-                }
-                // Now pick a random function from ifc to redeclare, if it has
-                // any (otherwise give up)
-                var toRedeclare = c.randomFunction();
-                if ((toRedeclare != null) &&
-                    !mFunctionMap.exists(toRedeclare.name)) {
-                    // Redeclare it in this interface
-                    var newf = new GenFunction().copySignature(toRedeclare);
-                    newf.makeBody();
-                    this.functions.push(newf);
-                    mFunctionMap.set(newf.name, newf);
-                    // Continue the outer while loop
-                    continue;
-                }
-            }
-            
-            // Generate a new function
-            var newf = new GenFunction().randomSignature();
-            newf.makeBody();
-            this.functions.push(newf);
-            mFunctionMap.set(newf.name, newf);
+        for (genclass in gClasses) {
+            genclass.createThisFields();
         }
     }
 
-    private function createThisInterfaceFunctions(i : GenInterface)
+    public static function fillFunctions()
     {
-        for (isuper in i._extends) {
-            this.createThisInterfaceFunctions(isuper);
-        }
-
-        for (f in i.functions) {
-            if (mFunctionMap.exists(f.name)) {
-                continue;
-            }
-            var thisf = new GenFunction().copySignature(f);
-            thisf.makeBody();
-            this.functions.push(thisf);
-            mFunctionMap.set(thisf.name, thisf);
+        for (genclass in gClasses) {
+            genclass.fillThisFunctions();
         }
     }
 
@@ -234,6 +182,7 @@ class GenClass
         this._implements = new Array<GenInterface>();
         this.depth = 0;
         this.functions = [ ];
+        this.fields = [ ];
         mFunctionMap = new haxe.ds.StringMap<GenFunction>();
     }
 
@@ -281,6 +230,88 @@ class GenClass
         }
     }
 
+    private function createThisFunctions()
+    {
+        // First, create any functions that need to be implemented from
+        // implemented interfaces
+        for (i in this._implements) {
+            this.createThisInterfaceFunctions(i);
+        }
+
+        // Now create some additional number of class-specific functions.
+        // Some should override functions in parent classes
+        var pct = 95;
+        while (true) {
+            if (!Random.chance(pct)) {
+                break;
+            }
+            pct = Std.int((pct * 2) / 3);
+            // Create a function.  33% chance of re-declaring one of its
+            // functions.
+            if ((this.depth > 0) && Random.chance(33)) {
+                // Pick a random superclass reimplement a function from
+                var w = (Random.random() % this.depth) + 1;
+                var c = this;
+                while (w > 0) {
+                    c = c._super;
+                    w -= 1;
+                }
+                // Now pick a random function from ifc to redeclare, if it has
+                // any (otherwise give up)
+                var toRedeclare = c.randomFunction();
+                if ((toRedeclare != null) &&
+                    !mFunctionMap.exists(toRedeclare.name)) {
+                    // Redeclare it in this interface
+                    var newf = new GenFunction().copySignature(toRedeclare);
+                    newf.makeBody();
+                    this.functions.push(newf);
+                    mFunctionMap.set(newf.name, newf);
+                    // Continue the outer while loop
+                    continue;
+                }
+            }
+            
+            // Generate a new function
+            var newf = new GenFunction().randomSignature(true);
+            this.functions.push(newf);
+            mFunctionMap.set(newf.name, newf);
+        }
+    }
+
+    private function createThisInterfaceFunctions(i : GenInterface)
+    {
+        for (isuper in i._extends) {
+            this.createThisInterfaceFunctions(isuper);
+        }
+
+        for (f in i.functions) {
+            if (mFunctionMap.exists(f.name)) {
+                continue;
+            }
+            var thisf = new GenFunction().copySignature(f);
+            this.functions.push(thisf);
+            mFunctionMap.set(thisf.name, thisf);
+        }
+    }
+
+    private function createThisFields()
+    {
+        // No properties yet ...
+        
+        var pct = 95;
+        while (Random.chance(pct)) {
+            pct = Std.int((pct * 9) / 10);
+            this.fields.push(new GenField());
+        }
+    }
+
+    private function fillThisFunctions()
+    {
+        for (f in this.functions) {
+            f.makeBody();
+        }
+    }
+
     private function emitThis()
     {
         var path = (Options.outdir + "/" + this._package + "/" +
@@ -323,11 +354,10 @@ class GenClass
             }
             out("\n");
             outi(8, "];\n");
-            outi(4, "}\n");
+            outi(4, "}\n\n");
         }
 
         // Temporary - emit empty constructor, which every class has
-        out("\n");
         outi(4, "public function new()\n");
         outi(4, "{\n");
         if (this._super != null) {
@@ -336,12 +366,22 @@ class GenClass
         outi(4, "}\n");
 
         for (f in this.functions) {
-            // If the function is in a super class, then emit "override "
-            // as a prefix to the function
-            if ((this._super != null) && 
+            out("\n");
+            // If the function is nonstatic and in a super class, then emit
+            // "override " as a prefix to the function
+            if (!f._static &&
+                (this._super != null) && 
                 (this._super.findFunction(f.name) != null)) {
-                out("override ");
+                out("    override");
             }
+            f.emit(mOut);
+        }
+
+        if (this.fields.length > 0) {
+            out("\n");
+        }
+
+        for (f in this.fields) {
             f.emit(mOut);
         }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  **/
 
-enum GenStatement
+enum GenExpression
 {
-    Return(expression : GenExpression);
+    Constant(c : Constant);
 }

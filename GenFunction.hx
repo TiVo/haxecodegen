@@ -20,6 +20,7 @@
 class GenFunction
 {
     public var name(default, null) : String;
+    public var _static(default, null) : Bool;
     public var args(default, null) : Array<{ name : String, type : GenType }>;
     public var returns(default, null) : Null<GenType>;
     public var body(default, null) : Null<Array<GenStatement>>;
@@ -28,9 +29,15 @@ class GenFunction
     {
     }
 
-    public function randomSignature() : GenFunction
+    public function randomSignature(allowStatic : Bool) : GenFunction
     {
         this.name = "func" + gNextNumber++;
+        if (allowStatic) {
+            this._static = Random.chance(10);
+        }
+        else {
+            this._static = false;
+        }
         this.args = [ ];
         var argnum = 0;
         while (Random.chance(50)) {
@@ -50,6 +57,7 @@ class GenFunction
     public function copySignature(func : GenFunction) : GenFunction
     {
         this.name = func.name;
+        this._static = func._static;
         this.args = func.args.copy();
         this.returns = func.returns;
         this.body = null;
@@ -59,13 +67,18 @@ class GenFunction
     public function makeBody()
     {
         this.body = [ ];
+        // For now, just make a default return if necessary
+        if (this.returns != null) {
+            this.body.push(Return(Constant(Util.randomConstant(this.returns))));
+        }
     }
 
     public function emit(o : haxe.io.Output)
     {
         mOut = o;
 
-        outi(4, "public function " + this.name + "(");
+        outi(4, (this._static ? "static " : "") + "public function " +
+             this.name + "(");
         var i = 0;
         while (i < this.args.length) {
             if (i > 0) {
@@ -76,12 +89,7 @@ class GenFunction
         }
         out(")");
 
-#if 0
         if (this.returns != null) {
-#else
-        if (false) {
-#end
-
             out(" : " + Util.typeString(this.returns));
         }
         else {
@@ -91,17 +99,16 @@ class GenFunction
         if (this.body != null) {
             out("\n");
             outi(4, "{\n");
-            outi(4, "}\n\n");
+            for (s in this.body) {
+                GenStatementHelpers.emit(s, mOut, 8);
+            }
+            outi(4, "}\n");
         }
         else {
-            out(";\n\n");
+            out(";\n");
         }
 
         mOut = null;
-    }
-
-    private function randomize()
-    {
     }
 
     private inline function out(str : String)

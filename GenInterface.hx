@@ -180,8 +180,7 @@ class GenInterface
             if (!Random.chance(pct)) {
                 break;
             }
-            pct *= 2;
-            pct = Std.int(pct / 3);
+            pct = Std.int((pct * 2) / 3);
             // Create a function.  10% chance of re-declaring one of its
             // functions.
             if (Random.chance(10)) {
@@ -204,7 +203,7 @@ class GenInterface
             }
             
             // Generate a new function
-            var newf =new GenFunction().randomSignature();
+            var newf =new GenFunction().randomSignature(false);
             this.functions.push(newf);
             mFunctionMap.set(newf.name, newf);
         }

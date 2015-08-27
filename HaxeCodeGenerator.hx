@@ -131,6 +131,12 @@ class HaxeCodeGenerator
         // Define class functions
         GenClass.createFunctions();
 
+        // Define class fields
+        GenClass.createFields();
+
+        // Fill class functions with statements
+        GenClass.fillFunctions();
+
         // Emit classes
         GenClass.emit();
 

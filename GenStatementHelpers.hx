@@ -14,7 +14,17 @@
  * limitations under the License.
  **/
 
-enum GenStatement
+class GenStatementHelpers
 {
-    Return(expression : GenExpression);
+    public static function emit(stmt : GenStatement, out : haxe.io.Output,
+                                indent : Int)
+    {
+        switch (stmt) {
+        case Return(exp):
+            Util.indent(out, indent);
+            out.writeString("return (");
+            GenExpressionHelpers.emit(exp, out);
+            out.writeString(");\n");
+        }
+    }
 }

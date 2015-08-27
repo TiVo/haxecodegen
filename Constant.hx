@@ -14,7 +14,11 @@
  * limitations under the License.
  **/
 
-enum GenStatement
+enum Constant
 {
-    Return(expression : GenExpression);
+    ConstantNull;
+    ConstantBool(b : Bool);
+    ConstantInt(i : Int);
+    ConstantFloat(f : Float);
+    ConstantString(s : String);
 }
