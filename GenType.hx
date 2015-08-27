@@ -25,4 +25,5 @@ enum GenType
     // GenTypeEnum(enm : GenEnum);
     GenTypeArray(t : GenType);
     GenTypeMap(k : GenType, v : GenType);
+    GenTypeAnonymous(names : Array<String>, types : Array<GenType>);
 }

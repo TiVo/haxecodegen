@@ -34,7 +34,7 @@ class Util
 
     public static function randomType(templDepth : Int = 2) : GenType
     {
-        var mod = (templDepth > 0) ? 8 : 6;
+        var mod = (templDepth > 1) ? 9 : (templDepth == 1) ? 8 : 7;
 
         switch (Random.random() % mod) {
         case 0:
@@ -53,6 +53,17 @@ class Util
             return GenTypeArray(randomType(templDepth - 1));
         case 7:
             return GenTypeMap(randomType(0), randomType(templDepth - 1));
+        case 8:
+            var names = new Array<String>();
+            var types = new Array<GenType>();
+            var n = (Random.random() % 6) + 1;
+            var i = 0;
+            while (i < n) {
+                names.push("elem" + i);
+                types.push(randomType(1));
+                i += 1;
+            }
+            return GenTypeAnonymous(names, types);
         }
 
         throw "Internal error - randomType using wrong number of types";
@@ -77,6 +88,18 @@ class Util
             return "Array<" + typeString(t) + ">";
         case GenTypeMap(k, v):
             return "Map<" + typeString(k) + ", " + typeString(v) + ">";
+        case GenTypeAnonymous(names, types):
+            var ret = "{ ";
+            var i = 0;
+            while (i < names.length) {
+                if (i > 0) {
+                    ret += ", ";
+                }
+                var name = names[i];
+                var type = types[i++];
+                ret += name + " : " + typeString(type);
+            }
+            return ret + " }";
         }
     }
 
@@ -102,6 +125,9 @@ class Util
             // For now
             return ConstantNull;
         case GenTypeMap(k, v):
+            // For now
+            return ConstantNull;
+        case GenTypeAnonymous(names, types):
             // For now
             return ConstantNull;
         }
