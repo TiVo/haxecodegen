@@ -32,9 +32,11 @@ class Util
         out.writeString(gIndents[i]);
     }
 
-    public static function randomType() : GenType
+    public static function randomType(templDepth : Int = 2) : GenType
     {
-        switch (Random.random() % 6) {
+        var mod = (templDepth > 0) ? 8 : 6;
+
+        switch (Random.random() % mod) {
         case 0:
             return GenTypeBool;
         case 1:
@@ -47,6 +49,10 @@ class Util
             return GenTypeInterface(GenInterface.randomInterface());
         case 5:
             return GenTypeClass(GenClass.randomClass());
+        case 6:
+            return GenTypeArray(randomType(templDepth - 1));
+        case 7:
+            return GenTypeMap(randomType(0), randomType(templDepth - 1));
         }
 
         throw "Internal error - randomType using wrong number of types";
@@ -67,6 +73,10 @@ class Util
             return ifc.fullname;
         case GenTypeClass(cls):
             return cls.fullname;
+        case GenTypeArray(t):
+            return "Array<" + typeString(t) + ">";
+        case GenTypeMap(k, v):
+            return "Map<" + typeString(k) + ", " + typeString(v) + ">";
         }
     }
 
@@ -87,6 +97,12 @@ class Util
             return ConstantNull;
         case GenTypeClass(cls):
             // For now ...
+            return ConstantNull;
+        case GenTypeArray(t):
+            // For now
+            return ConstantNull;
+        case GenTypeMap(k, v):
+            // For now
             return ConstantNull;
         }
     }

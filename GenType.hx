@@ -23,4 +23,6 @@ enum GenType
     GenTypeInterface(ifc : GenInterface);
     GenTypeClass(cls : GenClass);
     // GenTypeEnum(enm : GenEnum);
+    GenTypeArray(t : GenType);
+    GenTypeMap(k : GenType, v : GenType);
 }
