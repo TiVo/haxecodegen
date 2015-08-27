@@ -34,7 +34,7 @@ class Util
 
     public static function randomType(templDepth : Int = 2) : GenType
     {
-        var mod = (templDepth > 1) ? 9 : (templDepth == 1) ? 8 : 7;
+        var mod = (templDepth > 1) ? 10 : (templDepth == 1) ? 9 : 8;
 
         switch (Random.random() % mod) {
         case 0:
@@ -50,10 +50,19 @@ class Util
         case 5:
             return GenTypeClass(GenClass.randomClass());
         case 6:
-            return GenTypeArray(randomType(templDepth - 1));
+            var args = new Array<GenType>();
+            var n = Random.random() % 6;
+            while (n > 0) {
+                n -= 1;
+                args.push(randomType(templDepth - 1));
+            }
+            return GenTypeClosure
+                (args, Random.chance(50) ? randomType(templDepth) : null);
         case 7:
-            return GenTypeMap(randomType(0), randomType(templDepth - 1));
+            return GenTypeArray(randomType(templDepth - 1));
         case 8:
+            return GenTypeMap(randomType(0), randomType(templDepth - 1));
+        case 9:
             var names = new Array<String>();
             var types = new Array<GenType>();
             var n = (Random.random() % 6) + 1;
@@ -84,6 +93,24 @@ class Util
             return ifc.fullname;
         case GenTypeClass(cls):
             return cls.fullname;
+        case GenTypeClosure(args, returns):
+            var ret = "(";
+            if (args.length == 0) {
+                ret += "Void -> ";
+            }
+            else {
+                var i = 0;
+                while (i < args.length) {
+                    ret += typeString(args[i++]) + " -> ";
+                }
+            }
+            if (returns == null) {
+                ret += "Void";
+            }
+            else {
+                ret += typeString(returns);
+            }
+            return ret + ")";
         case GenTypeArray(t):
             return "Array<" + typeString(t) + ">";
         case GenTypeMap(k, v):
@@ -119,6 +146,9 @@ class Util
             // For now ...
             return ConstantNull;
         case GenTypeClass(cls):
+            // For now ...
+            return ConstantNull;
+        case GenTypeClosure(args, returns):
             // For now ...
             return ConstantNull;
         case GenTypeArray(t):

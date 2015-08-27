@@ -23,6 +23,7 @@ enum GenType
     GenTypeInterface(ifc : GenInterface);
     GenTypeClass(cls : GenClass);
     // GenTypeEnum(enm : GenEnum);
+    GenTypeClosure(args : Array<GenType>, returns : Null<GenType>);
     GenTypeArray(t : GenType);
     GenTypeMap(k : GenType, v : GenType);
     GenTypeAnonymous(names : Array<String>, types : Array<GenType>);
