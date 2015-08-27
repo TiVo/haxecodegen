@@ -34,22 +34,24 @@ class Util
 
     public static function randomType(templDepth : Int = 2) : GenType
     {
-        var mod = (templDepth > 1) ? 10 : (templDepth == 1) ? 9 : 8;
+        var mod = (templDepth > 1) ? 11 : (templDepth == 1) ? 10 : 9;
 
         switch (Random.random() % mod) {
         case 0:
-            return GenTypeBool;
+            return GenTypeDynamic;
         case 1:
-            return GenTypeInt;
+            return GenTypeBool;
         case 2:
-            return GenTypeFloat;
+            return GenTypeInt;
         case 3:
-            return GenTypeString;
+            return GenTypeFloat;
         case 4:
-            return GenTypeInterface(GenInterface.randomInterface());
+            return GenTypeString;
         case 5:
-            return GenTypeClass(GenClass.randomClass());
+            return GenTypeInterface(GenInterface.randomInterface());
         case 6:
+            return GenTypeClass(GenClass.randomClass());
+        case 7:
             var args = new Array<GenType>();
             var n = Random.random() % 6;
             while (n > 0) {
@@ -58,11 +60,11 @@ class Util
             }
             return GenTypeClosure
                 (args, Random.chance(50) ? randomType(templDepth) : null);
-        case 7:
-            return GenTypeArray(randomType(templDepth - 1));
         case 8:
-            return GenTypeMap(randomType(0), randomType(templDepth - 1));
+            return GenTypeArray(randomType(templDepth - 1));
         case 9:
+            return GenTypeMap(randomType(0), randomType(templDepth - 1));
+        case 10:
             var names = new Array<String>();
             var types = new Array<GenType>();
             var n = (Random.random() % 6) + 1;
@@ -81,6 +83,8 @@ class Util
     public static function typeString(gt : GenType) : String
     {
         switch (gt) {
+        case GenTypeDynamic:
+            return "Dynamic";
         case GenTypeBool:
             return "Bool";
         case GenTypeInt:
@@ -133,6 +137,9 @@ class Util
     public static function randomConstant(gt : GenType) : Constant
     {
         switch (gt) {
+        case GenTypeDynamic:
+            // For now ...
+            return ConstantNull;
         case GenTypeBool:
             return ConstantBool(Random.chance(50));
         case GenTypeInt:

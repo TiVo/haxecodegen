@@ -40,8 +40,8 @@
  *
  * - classes (of various numbers, size, complexity, and inheritence and
  *            interface implementation characteristics)
- * - interfacees (of various numbers, size, complexity, and inheritence
- *                characteristics)
+ * - interfaces (of various numbers, size, complexity, and inheritence
+ *               characteristics)
  * - enums (of of various numbers, size, and complexity)
  * - anonymous classes
  * - class properties (with various accessor/mutator types)

@@ -16,6 +16,7 @@
 
 enum GenType
 {
+    GenTypeDynamic;
     GenTypeBool;
     GenTypeInt;
     GenTypeFloat;
