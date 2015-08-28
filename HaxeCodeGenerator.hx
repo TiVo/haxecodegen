@@ -66,6 +66,23 @@
  * The generated code is pure haxe with no target-specific characteristics and
  * thus should be applicable to evaluating every haxe target type (javascript,
  * hxcpp, neko, etc).
+ *
+ * TODO:
+ *
+ * - templates
+ * - exception handling (try/catch/throw)
+ * - Dynamic types (casting to/from, as well as setting values on/getting
+ *                  values from)
+ * - closures
+ * - functions with varargs
+ * - iterators (especially integer iterators, to gauge unnecessary churn)
+ * - switch pattern matching (simple and complex)
+ * - @:unreflective (to evaluate effectiveness)
+ * - @:unreflective inline (to evaluate effectiveness)
+ * - inline (to evaluate resulting code size)
+ * - Bytes and ByteData classes
+ * - EReg class
+ * - nontrivial function bodies
  **/
 
 class HaxeCodeGenerator

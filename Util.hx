@@ -77,7 +77,17 @@ class Util
         case GenTypeArray(t):
             return "Array<" + typeString(t) + ">";
         case GenTypeMap(k, v):
-            return "Map<" + typeString(k) + ", " + typeString(v) + ">";
+            // hxcpp is currently buggy and the abstract Map type doesn't work
+            // well.  Use specific maps.
+            switch (k) {
+            case GenTypeInt:
+                return "haxe.ds.IntMap<" + typeString(v) + ">";
+            case GenTypeString:
+                return "haxe.ds.StringMap<" + typeString(v) + ">";
+            default:
+                return ("haxe.ds.ObjectMap<" + typeString(k) + ", " + 
+                        typeString(v) + ">");
+            }
         case GenTypeAnonymous(names, types):
             var ret = "{ ";
             var i = 0;
@@ -211,9 +221,20 @@ class Util
                 }
             case 10:
                 if (allowMap) {
+                    // Only allow integer, string, class, and interface keys
+                    var keyType = 
+                        switch (Random.random() % 4) {
+                        case 0:
+                            GenTypeInt;
+                        case 1:
+                            GenTypeString;
+                        case 2:
+                            GenTypeClass(GenClass.randomClass());
+                        default:
+                            GenTypeInterface(GenInterface.randomInterface());
+                        };
                     return GenTypeMap
-                        (randomSpecificType(false, 0, false, false),
-                         randomSpecificType(true, 2, false, true));
+                        (keyType, randomSpecificType(true, 2, false, true));
                 }
             case 11:
                 if (allowAnonymous) {
