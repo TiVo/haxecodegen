@@ -31,7 +31,7 @@ class Options
     // Number of anonymous classes to generate
     public static var anonymousClassCount : Int; // default 15
     // Maximum class/interface hierarchy depth
-    public static var maxExtendsDepth : Int; // default 5
+    public static var maxExtendsDepth : Int; // default 10
 
     public static var usageString = "Usage: ";
 
@@ -52,7 +52,7 @@ class Options
         interfaceCount = 1750;
         enumCount = 200;
         anonymousClassCount = 15;
-        maxExtendsDepth = 5;
+        maxExtendsDepth = 10;
 
         var argv = Sys.args();
         var iter = 0 ... argv.length;

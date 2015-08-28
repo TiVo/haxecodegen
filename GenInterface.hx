@@ -156,7 +156,8 @@ class GenInterface
         mFunctionMap = new haxe.ds.StringMap<GenFunction>();
     }
 
-    // May fail to extend if it happens to hit something already extended
+    // May fail to extend if it happens to hit something already extended or
+    // something that can't be extended
     private function extendRandom()
     {
         var toExtend;
@@ -169,7 +170,7 @@ class GenInterface
                 return;
             }
             if (toExtend.maxdepth >= (Options.maxExtendsDepth - 1)) {
-                continue;
+                return;
             }
             this._extends.push(toExtend);
             if (toExtend.maxdepth >= this.maxdepth) {

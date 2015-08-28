@@ -190,7 +190,7 @@ class GenClass
     }
 
     // Will fail to extend if it happens to hit this class or a class extending
-    // this class
+    // this class or one that can't be extended
     private function extendRandom()
     {
         var toExtend;
@@ -200,7 +200,7 @@ class GenClass
                 return;
             }
             if (toExtend.depth >= (Options.maxExtendsDepth - 1)) {
-                continue;
+                return;
             }
             if (!toExtend.isOrExtendsClass(this)) {
                 this._super = toExtend;
@@ -211,7 +211,7 @@ class GenClass
     }
 
     // Will fail to implement if it happens to hit an already implemented
-    // interface
+    // interface or one that can't be extended
     private function implementRandom()
     {
         var toImplement;
@@ -226,7 +226,7 @@ class GenClass
                 }
             }
             if (toImplement.maxdepth >= (Options.maxExtendsDepth - 1)) {
-                continue;
+                return;
             }
             this._implements.push(toImplement);
             break;
