@@ -32,52 +32,9 @@ class Util
         out.writeString(gIndents[i]);
     }
 
-    public static function randomType(templDepth : Int = 2) : GenType
+    public static function randomType() : GenType
     {
-        var mod = (templDepth > 1) ? 11 : (templDepth == 1) ? 10 : 9;
-
-        switch (Random.random() % mod) {
-        case 0:
-            return GenTypeDynamic;
-        case 1:
-            return GenTypeBool;
-        case 2:
-            return GenTypeInt;
-        case 3:
-            return GenTypeFloat;
-        case 4:
-            return GenTypeString;
-        case 5:
-            return GenTypeInterface(GenInterface.randomInterface());
-        case 6:
-            return GenTypeClass(GenClass.randomClass());
-        case 7:
-            var args = new Array<GenType>();
-            var n = Random.random() % 6;
-            while (n > 0) {
-                n -= 1;
-                args.push(randomType(templDepth - 1));
-            }
-            return GenTypeClosure
-                (args, Random.chance(50) ? randomType(templDepth) : null);
-        case 8:
-            return GenTypeArray(randomType(templDepth - 1));
-        case 9:
-            return GenTypeMap(randomType(0), randomType(templDepth - 1));
-        case 10:
-            var names = new Array<String>();
-            var types = new Array<GenType>();
-            var n = (Random.random() % 6) + 1;
-            var i = 0;
-            while (i < n) {
-                names.push("elem" + i);
-                types.push(randomType(1));
-                i += 1;
-            }
-            return GenTypeAnonymous(names, types);
-        }
-
-        throw "Internal error - randomType using wrong number of types";
+        return randomSpecificType(true, 2, true, true);
     }
 
     public static function typeString(gt : GenType) : String
@@ -97,6 +54,8 @@ class Util
             return ifc.fullname;
         case GenTypeClass(cls):
             return cls.fullname;
+        case GenTypeEnum(enm):
+            return enm.fullname;
         case GenTypeClosure(args, returns):
             var ret = "(";
             if (args.length == 0) {
@@ -155,6 +114,9 @@ class Util
         case GenTypeClass(cls):
             // For now ...
             return ConstantNull;
+        case GenTypeEnum(enm):
+            // For now ...
+            return ConstantNull;
         case GenTypeClosure(args, returns):
             // For now ...
             return ConstantNull;
@@ -198,6 +160,76 @@ class Util
         }
 
         throw "Internal error - randomAccessor uses wrong mod";
+    }
+
+    private static function randomSpecificType(allowClosure : Bool,
+                                               arrayDepth : Int,
+                                               allowMap : Bool,
+                                               allowAnonymous : Bool) : GenType
+    {
+        while (true) {
+            var which = Random.random() % 12;
+            switch (which) {
+            case 0:
+                return GenTypeDynamic;
+            case 1:
+                return GenTypeBool;
+            case 2:
+                return GenTypeInt;
+            case 3:
+                return GenTypeFloat;
+            case 4:
+                return GenTypeString;
+            case 5:
+                var ifc = GenInterface.randomInterface();
+                if (ifc != null) {
+                    return GenTypeInterface(ifc);
+                }
+            case 6:
+                return GenTypeClass(GenClass.randomClass());
+            case 7:
+                var enm = GenEnum.randomEnum();
+                if (enm != null) {
+                    return GenTypeEnum(enm);
+                }
+            case 8:
+                if (allowClosure) {
+                    var args = new Array<GenType>();
+                    var n = Random.random() % 6;
+                    while (n > 0) {
+                        n -= 1;
+                        args.push(randomSpecificType(false, 1, false, false));
+                    }
+                    return GenTypeClosure
+                        (args, Random.chance(50) ? 
+                         randomSpecificType(false, 1, false, false) : null);
+                }
+            case 9:
+                if (arrayDepth > 0) {
+                    return GenTypeArray(randomSpecificType
+                                        (true, arrayDepth - 1, true, true));
+                }
+            case 10:
+                if (allowMap) {
+                    return GenTypeMap
+                        (randomSpecificType(false, 0, false, false),
+                         randomSpecificType(true, 2, false, true));
+                }
+            case 11:
+                if (allowAnonymous) {
+                    var names = new Array<String>();
+                    var types = new Array<GenType>();
+                    var n = (Random.random() % 6) + 1;
+                    var i = 0;
+                    while (i < n) {
+                        names.push("elem" + i);
+                        types.push(randomSpecificType(true, 1, true, false));
+                        i += 1;
+                    }
+                    return GenTypeAnonymous(names, types);
+                }
+            }
+        }
     }
 
     private static var gIndents : Array<String> = [ "" ];

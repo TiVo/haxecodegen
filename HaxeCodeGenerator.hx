@@ -117,8 +117,6 @@ class HaxeCodeGenerator
         // Create enums
         GenEnum.generate();
         
-        // Create anonymous classes
-
         // Define class hierarchy
         GenClass.createHierarchy();
         
@@ -140,6 +138,9 @@ class HaxeCodeGenerator
         // Fill class functions with statements
         GenClass.fillFunctions();
 
+        // Define enum elements
+        GenEnum.createElements();
+
         // Emit classes
         GenClass.emit();
 
@@ -147,6 +148,7 @@ class HaxeCodeGenerator
         GenInterface.emit();
 
         // Emit enums
+        GenEnum.emit();
 
         // Emit the build scripts
 
