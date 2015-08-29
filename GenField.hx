@@ -41,6 +41,18 @@ class GenField
         }
     }
 
+    public function isReadable() : Bool
+    {
+        return ((this.accessor == null) || (this.accessor == GetSet) ||
+                (this.accessor == GetNull));
+    }
+
+    public function isWriteable() : Bool
+    {
+        return ((this.accessor == null) || (this.accessor == GetSet) ||
+                (this.accessor == NullSet));
+    }
+
     public function emit(o : haxe.io.Output)
     {
         mOut = o;

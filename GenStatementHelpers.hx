@@ -57,12 +57,12 @@ class GenStatementHelpers
     {
         // 90% chance of trying to find an existing variable
         if (Random.chance(90)) {
-            var v = bs.randomVariable(gt);
+            var v = bs.randomReadableVariable(gt);
             if (v == null) {
                 // Find a class somewhere with a static variable of the given
                 // type
                 var s = Util.randomStatic(gt);
-                if (s != null) {
+                if ((s != null) && s.field.isReadable()) {
                     return Variable(s.gc.fullname + "." + s.field.name);
                 }
             }
@@ -100,18 +100,18 @@ class GenStatementHelpers
         // 90% chance of using existing
         if (Random.chance(90)) {
             // Find a variable to assign to
-            if (bs.variables.length > 0) {
-                var v = bs.variables[Random.random() % bs.variables.length];
-                return Assignment(v.name, 
-                                  randomExpressionOfType(bs, out, v.type));
-            }
-            else {
+            var v = bs.randomWriteableVariable(null);
+            if (v == null) {
                 var s = Util.randomStatic(null);
-                if (s != null) {
+                if ((s != null) && s.field.isWriteable()) {
                     return Assignment(s.gc.fullname + "." + s.field.name,
                                       randomExpressionOfType
                                       (bs, out, s.field.type));
                 }
+            }
+            else {
+                return Assignment(v.name, 
+                                  randomExpressionOfType(bs, out, v.type));
             }
         }
 

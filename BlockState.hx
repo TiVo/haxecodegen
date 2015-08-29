@@ -20,7 +20,8 @@ class BlockState
 {
     // variables is an array of variables available in the current context
     // along with their types
-    public var variables : Array<{ name : String, type : GenType }>;
+    public var variables : Array<{ name : String, type : GenType,
+                                   r : Bool, w : Bool}>;
     // functions that can be called
     public var functions : Array<GenFunction>;
     public var depth : Int;
@@ -28,25 +29,49 @@ class BlockState
     public var nextLocalNumber : Int;
     // Prevents function call loops
     public var allowFunctionCall : Bool;
+    public var inStaticFunction : Bool;
 
     public function new(gc : GenClass, gf : GenFunction)
     {
         this.variables = [ ];
-        this.functions = gc.functions;
         for (f in gc.fields) {
-            this.variables.push({ name : f.name, type : f.type });
+            if (!gf._static || (gf._static && f._static)) {
+                this.variables.push({ name : f.name, type : f.type,
+                                      r : f.isReadable(),
+                                      w : f.isWriteable() });
+            }
         }
         for (a in gf.args) {
-            this.variables.push(a);
+            this.variables.push({ name : a.name, type : a.type,
+                                  r : true, w : true });
+        }
+        this.functions = [ ];
+        for (f in gc.functions) {
+            if (!gf._static || (gf._static && f._static)) {
+                this.functions.push(f);
+            }
         }
         this.depth = 0;
         this.returnType = gf.returns;
         this.nextLocalNumber = 0;
         this.allowFunctionCall = true;
+        this.inStaticFunction = gf._static;
     }
 
-    public function randomVariable(gt : GenType) : Null<{ name : String, 
-                                                          type : GenType }>
+    public function randomReadableVariable(gt : Null<GenType>)
+        : Null<{ name : String, type : GenType }>
+    {
+        return this.randomVariable(gt, true, false);
+    }
+
+    public function randomWriteableVariable(gt : Null<GenType>)
+        : Null<{ name : String, type : GenType }>
+    {
+        return this.randomVariable(gt, false, true);
+    }
+
+    private function randomVariable(gt : Null<GenType>, r : Bool, w : Bool)
+        : Null<{ name : String, type : GenType }>
     {
         if (this.variables.length == 0) {
             return null;
@@ -56,7 +81,8 @@ class BlockState
         var i = index;
         while (i < this.variables.length) {
             var v = this.variables[i];
-            if (Util.typesEqual(v.type, gt)) {
+            if ((r && v.r) || (w && v.w) &&
+                ((gt == null) || Util.typesEqual(v.type, gt))) {
                 return v;
             }
             i += 1;
@@ -65,7 +91,8 @@ class BlockState
         i = 0;
         while (i < index) {
             var v = this.variables[i];
-            if (Util.typesEqual(v.type, gt)) {
+            if ((r && v.r) || (w && v.w) &&
+                ((gt == null) || Util.typesEqual(v.type, gt))) {
                 return v;
             }
             i += 1;
