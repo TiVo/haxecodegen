@@ -182,15 +182,15 @@ class GenInterface
 
     private function createThisFunctions()
     {
-        // Start with a 95% chance of creating a function.  Each time a
-        // function is created, reduce the chance by 1/3 and repeat, until
+        // Start with a 98% chance of creating a function.  Each time a
+        // function is created, reduce the chance by 10% and repeat, until
         // a function is not created
-        var pct = 95;
+        var pct = 98;
         while (true) {
             if (!Random.chance(pct)) {
                 break;
             }
-            pct = Std.int((pct * 2) / 3);
+            pct = Std.int((pct * 9) / 10);
             // Create a function.  10% chance of re-declaring one of its
             // functions.
             if (Random.chance(10)) {
@@ -224,7 +224,7 @@ class GenInterface
         var pct = 10;
         while (Random.chance(pct)) {
             pct = Std.int((pct * 9) / 10);
-            this.properties.push(new GenField(true));
+            this.properties.push(new GenField(null, true));
         }
     }
 

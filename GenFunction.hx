@@ -24,6 +24,8 @@ class GenFunction
     public var args(default, null) : Array<{ name : String, type : GenType }>;
     public var returns(default, null) : Null<GenType>;
     public var body(default, null) : Null<Array<GenStatement>>;
+    // String to use when calling, includes static class name if necessary
+    public var callAs(default, null) : String;
 
     public function new()
     {
@@ -40,7 +42,11 @@ class GenFunction
         }
         this.args = [ ];
         var argnum = 0;
-        while (Random.chance(50)) {
+        // Start with a 80% chance of an argument, and then reduce chance by
+        // 10% each argument, to a maximum of 10 arguments
+        var pct = 80;
+        while ((this.args.length < 10) && Random.chance(pct)) {
+            pct = Std.int((pct * 9) / 10);
             this.args.push({ name : "arg" + argnum++,
                         type : Util.randomType() });
         }
@@ -64,10 +70,20 @@ class GenFunction
         return this;
     }
 
-    public function makeBody()
+    // gc is the class containing the function
+    public function makeBody(gc : GenClass)
     {
+        if (this._static) {
+            this.callAs = gc.fullname + "." + this.name;
+        }
+        else {
+            this.callAs = this.name;
+        }
         this.body = [ ];
-        // For now, just make a default return if necessary
+        var bs = new BlockState(gc, this);
+        GenStatementHelpers.randomBlock(bs, this.body);
+        // Make a default return if necessary, in case the function didn't
+        // otherwise return
         if (this.returns != null) {
             this.body.push(Return(Constant(Util.randomConstant(this.returns))));
         }

@@ -37,6 +37,12 @@ class Util
         return randomSpecificType(true, 2, true, true);
     }
 
+    public static inline function typesEqual(gt1 : GenType,
+                                             gt2 : GenType) : Bool
+    {
+        return std.Type.enumEq(gt1, gt2);
+    }
+
     public static function typeString(gt : GenType) : String
     {
         switch (gt) {
@@ -172,6 +178,76 @@ class Util
         throw "Internal error - randomAccessor uses wrong mod";
     }
 
+    // Static variable tracking
+    public static function addStatic(gc : GenClass, field : GenField)
+    {
+        // Hash type to array of statics of that type
+        var typeString = typeString(field.type);
+        var arr = gStatics.get(typeString);
+        if (arr == null) {
+            arr = [ ];
+            gStatics.set(typeString, arr);
+            gStaticsArray.push(arr);
+        }
+        arr.push({ gc : gc, field : field });
+    }
+
+    // Get a random static of the given type, if one exists
+    public static function randomStatic(type : Null<GenType>)
+        : Null<{ gc : GenClass, field : GenField }>
+    {
+        if (type == null) {
+            if (gStaticsArray.length == 0) {
+                return null;
+            }
+            var arr = gStaticsArray[Random.random() % gStaticsArray.length];
+            return arr[Random.random() % arr.length];
+        }
+        else {
+            var arr = gStatics.get(typeString(type));
+            if (arr == null) {
+                return null;
+            }
+            return arr[Random.random() % arr.length];
+        }
+    }
+
+    // Static function tracking
+    public static function addStaticFunction(f : GenFunction)
+    {
+        if (f.returns == null) {
+            gStaticFunctionsNoReturn.push(f);
+        }
+        else {
+            var typeString = typeString(f.returns);
+            var arr = gStaticFunctions.get(typeString);
+            if (arr == null) {
+                arr = [ ];
+                gStaticFunctions.set(typeString, arr);
+            }
+            arr.push(f);
+        }
+    }
+
+    public static function randomStaticFunction(returnType : Null<GenType>)
+        : Null<GenFunction>
+    {
+        if (returnType == null) {
+            if (gStaticFunctionsNoReturn.length == 0) {
+                return null;
+            }
+            return gStaticFunctionsNoReturn
+                [Random.random() % gStaticFunctionsNoReturn.length];
+        }
+        else {
+            var arr = gStaticFunctions.get(typeString(returnType));
+            if (arr == null) {
+                return null;
+            }
+            return arr[Random.random() % arr.length];
+        }
+    }
+
     private static function randomSpecificType(allowClosure : Bool,
                                                arrayDepth : Int,
                                                allowMap : Bool,
@@ -254,4 +330,11 @@ class Util
     }
 
     private static var gIndents : Array<String> = [ "" ];
+    private static var gStatics = new
+        haxe.ds.StringMap<Array<{ gc : GenClass, field : GenField }>>();
+    private static var gStaticsArray = new Array<Array<{ gc : GenClass,
+                                                         field : GenField }>>();
+    private static var gStaticFunctionsNoReturn = new Array<GenFunction>();
+    private static var gStaticFunctions =
+        new haxe.ds.StringMap<Array<GenFunction>>();
 }

@@ -24,7 +24,7 @@ class GenField
     public var type(default, null) : GenType;
     public var accessor(default, null) : Null<Accessor>;
 
-    public function new(ofInterface : Bool)
+    public function new(gc : GenClass, ofInterface : Bool)
     {
         this.name = "field" + gNextNumber++;
         this._static = ofInterface ? false : Random.chance(10);
@@ -35,6 +35,9 @@ class GenField
         }
         else {
             this.accessor = null;
+        }
+        if (this._static) {
+            Util.addStatic(gc, this);
         }
     }
 

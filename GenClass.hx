@@ -248,7 +248,7 @@ class GenClass
             if (!Random.chance(pct)) {
                 break;
             }
-            pct = Std.int((pct * 2) / 3);
+            pct = Std.int((pct * 9) / 10);
             // Create a function.  33% chance of re-declaring one of its
             // functions.
             if ((this.depth > 0) && Random.chance(33)) {
@@ -266,7 +266,7 @@ class GenClass
                     !mFunctionMap.exists(toRedeclare.name)) {
                     // Redeclare it in this interface
                     var newf = new GenFunction().copySignature(toRedeclare);
-                    newf.makeBody();
+                    newf.makeBody(this);
                     this.functions.push(newf);
                     mFunctionMap.set(newf.name, newf);
                     // Continue the outer while loop
@@ -302,14 +302,14 @@ class GenClass
         var pct = 95;
         while (Random.chance(pct)) {
             pct = Std.int((pct * 9) / 10);
-            this.fields.push(new GenField(false));
+            this.fields.push(new GenField(this, false));
         }
     }
 
     private function fillThisFunctions()
     {
         for (f in this.functions) {
-            f.makeBody();
+            f.makeBody(this);
         }
     }
 

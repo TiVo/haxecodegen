@@ -21,6 +21,19 @@ class GenExpressionHelpers
         switch (stmt) {
         case Constant(c):
             out.writeString(Util.constantToString(c));
+        case Variable(name):
+            out.writeString(name);
+        case FunctionCall(f, args):
+            out.writeString(f.callAs);
+            out.writeString("(");
+            var i = 0;
+            while (i < args.length) {
+                if (i > 0) {
+                    out.writeString(", ");
+                }
+                emit(args[i++], out);
+            }
+            out.writeString(")");
         }
     }
 }

@@ -17,4 +17,6 @@
 enum GenExpression
 {
     Constant(c : Constant);
+    Variable(name : String);
+    FunctionCall(f : GenFunction, args : Array<GenExpression>);
 }
