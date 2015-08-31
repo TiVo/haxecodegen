@@ -75,14 +75,11 @@
  *                  values from)
  * - closures
  * - functions with varargs
- * - iterators (especially integer iterators, to gauge unnecessary churn)
  * - switch pattern matching (simple and complex)
  * - @:unreflective (to evaluate effectiveness)
  * - @:unreflective inline (to evaluate effectiveness)
- * - inline (to evaluate resulting code size)
  * - Bytes and ByteData classes
  * - EReg class
- * - nontrivial function bodies
  **/
 
 class HaxeCodeGenerator
@@ -152,11 +149,11 @@ class HaxeCodeGenerator
         // Define class fields
         GenClass.createFields();
 
-        // Fill class functions with statements
-        GenClass.fillFunctions();
-
         // Define enum elements
         GenEnum.createElements();
+
+        // Fill class functions with statements
+        GenClass.fillFunctions();
 
         // Emit classes
         GenClass.emit();

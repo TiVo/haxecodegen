@@ -19,6 +19,7 @@ enum GenStatement
     Var(name : String, type : GenType, initialValue : GenExpression);
     Assignment(path : String, expression : GenExpression);
     For(ivar : String, begin : Int, end : Int, block : Array<GenStatement>);
+    FunctionCall(f : GenFunction, args : Array<GenExpression>);
     If(condition : GenExpression, ifBlock : Array<GenStatement>,
        elseBlock : Null<Array<GenStatement>>);
     Return(expression : GenExpression);

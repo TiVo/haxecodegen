@@ -21,6 +21,7 @@ class GenFunction
 {
     public var name(default, null) : String;
     public var _static(default, null) : Bool;
+    public var _inline(default, null) : Bool;
     public var args(default, null) : Array<{ name : String, type : GenType }>;
     public var returns(default, null) : Null<GenType>;
     public var body(default, null) : Null<Array<GenStatement>>;
@@ -64,6 +65,7 @@ class GenFunction
     {
         this.name = func.name;
         this._static = func._static;
+        this._inline = func._inline;
         this.args = func.args.copy();
         this.returns = func.returns;
         this.body = null;
@@ -95,6 +97,9 @@ class GenFunction
             else {
                 bs.statementCount = (Random.random() % (80 - 16)) + 16;
             }
+            if ((bs.statementCount < 6) && Random.chance(10)) {
+                this._inline = true;
+            }
             while (bs.statementCount > 0) {
                 GenStatementHelpers.randomBlock(bs, this.body);
             }
@@ -110,8 +115,9 @@ class GenFunction
     {
         mOut = o;
 
-        outi(4, (this._static ? "static " : "") + "public function " +
-             this.name + "(");
+        outi(4, (this._static ? "static " : "") + 
+             (this._inline ? "inline " : "") + 
+             "public function " + this.name + "(");
         var i = 0;
         while (i < this.args.length) {
             if (i > 0) {

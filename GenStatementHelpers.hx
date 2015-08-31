@@ -51,10 +51,24 @@ class GenStatementHelpers
             return randomAssignment(bs, out);
         }
 
-        switch (Random.random() % 3) {
+        switch (Random.random() % 4) {
         case 0:
             return randomFor(bs, out);
         case 1:
+            // Find a function to call at random
+            while (true) {
+                var func = GenClass.randomClass().randomFunction();
+                if (func != null) {
+                    var exp = randomFunctionCall(bs, out, func);
+                    switch (exp) {
+                    case FunctionCall(f, args):
+                        return FunctionCall(f, args);
+                    default:
+                        throw "Internal error - expected function call";
+                    }
+                }
+            }
+        case 2:
             return randomIf(bs, out);
         default:
             return randomAssignment(bs, out);
@@ -217,9 +231,18 @@ class GenStatementHelpers
             if (v == null) {
                 var s = Util.randomStatic(null);
                 if ((s != null) && s.field.isWriteable()) {
-                    return Assignment(s.gc.fullname + "." + s.field.name,
-                                      randomExpressionOfType
-                                      (bs, out, s.field.type));
+                    // If it's dynamic, do a dynamic property set
+                    if (s.field.type == GenTypeDynamic) {
+                        return Assignment(s.gc.fullname + "." + s.field.name +
+                                          "." + Random.identifier(false),
+                                          randomExpressionOfType
+                                          (bs, out, Util.randomType()));
+                    }
+                    else {
+                        return Assignment(s.gc.fullname + "." + s.field.name,
+                                          randomExpressionOfType
+                                          (bs, out, s.field.type));
+                    }
                 }
             }
             else {
@@ -278,6 +301,17 @@ class GenStatementHelpers
             }
             Util.indent(out, indent);
             out.writeString("}\n");
+        case FunctionCall(f, args):
+            out.writeString(f.callAs);
+            out.writeString("(");
+            var i = 0;
+            while (i < args.length) {
+                if (i > 0) {
+                    out.writeString(", ");
+                }
+                GenExpressionHelpers.emit(args[i++], out);
+            }
+            out.writeString(");\n");
         case If(condition, ifBlock, elseBlock):
             out.writeString("if (");
             GenExpressionHelpers.emit(condition, out);
