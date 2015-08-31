@@ -14,25 +14,26 @@
  * limitations under the License.
  **/
 
+
+import GenExpression;
+
 class GenStatementHelpers
 {
     public static function randomBlock(bs : BlockState,
                                        out : Array<GenStatement>)
     {
-        // 2% chance of no statements
-        if (Random.chance(2)) {
+        if (bs.statementCount == 0) {
             return;
         }
+        bs.depth += 1;
+        var count = (Random.random() % bs.statementCount) + 1;
         // Initial 1 - 5 statements
-        var count = (Random.random() % 5) + 1;
-        // Add in additional statements
-        if (bs.depth < 4) {
-            count += Random.random() % (10 - (2 * bs.depth));
-        }
-        while (count > 0) {
+        while ((bs.statementCount > 0) && (count > 0)) {
+            bs.statementCount -= 1;
             count -= 1;
             out.push(randomStatement(bs, out));
         }
+        bs.depth -= 1;
     }
 
     public static function randomStatement(bs : BlockState, 
@@ -45,9 +46,19 @@ class GenStatementHelpers
                 return Return(randomExpressionOfType(bs, out, bs.returnType));
             }
         }
+        
+        if (bs.depth > 3) {
+            return randomAssignment(bs, out);
+        }
 
-        // Generate an assignment
-        return randomAssignment(bs, out);
+        switch (Random.random() % 3) {
+        case 0:
+            return randomFor(bs, out);
+        case 1:
+            return randomIf(bs, out);
+        default:
+            return randomAssignment(bs, out);
+        }
     }
 
     public static function randomExpressionOfType(bs : BlockState, 
@@ -55,8 +66,8 @@ class GenStatementHelpers
                                                   gt : GenType)
         : GenExpression
     {
-        // 90% chance of trying to find an existing variable
-        if (Random.chance(90)) {
+        // 60% chance of trying to find an existing variable
+        if (Random.chance(60)) {
             var v = bs.randomReadableVariable(gt);
             if (v == null) {
                 // Find a class somewhere with a static variable of the given
@@ -69,9 +80,9 @@ class GenStatementHelpers
         }
 
         if (bs.allowFunctionCall) {
-            // 50% chance of looking in the current class for a function that
+            // 40% chance of looking in the current class for a function that
             // returns this type
-            if (Random.chance(50)) {
+            if (Random.chance(40)) {
                 for (f in bs.functions) {
                     if ((f.returns != null) && Util.typesEqual(f.returns, gt)) {
                         return randomFunctionCall(bs, out, f);
@@ -79,18 +90,120 @@ class GenStatementHelpers
                 }
             }
             
-            // 50% chance of looking for a static function that returns this
+            // 40% chance of looking for a static function that returns this
             // type
-            if (Random.chance(50)) {
+            if (Random.chance(40)) {
                 var f = Util.randomStaticFunction(gt);
                 if (f != null) {
                     return randomFunctionCall(bs, out, f);
                 }
             }
         }
+
+        if (bs.expressionDepth < 3) {
+            var ret = null;
+            bs.expressionDepth += 1;
+            // If the expression is of type Bool, 40% chance of random boolean
+            // operation
+            if ((gt == GenTypeBool) && Random.chance(40)) {
+                var subtype : GenType;
+                switch (Random.random() % 3) {
+                case 0:
+                    subtype = GenTypeBool;
+                case 1:
+                    subtype = GenTypeInt;
+                default:
+                    subtype = GenTypeFloat;
+                }
+                ret = BinaryBoolean(randomExpressionOfType(bs, out, subtype),
+                                    randomBoolOp(subtype),
+                                    randomExpressionOfType(bs, out, subtype));
+            }
+            
+            // If the expression is of type Int or Float, 40% chance of math
+            // expression
+            if (((gt == GenTypeInt) || (gt == GenTypeFloat)) &&
+                Random.chance(40)) {
+                var op = randomMathOp();
+                ret = BinaryMath(randomExpressionOfType(bs, out, gt),
+                                 op,
+                                 randomExpressionOfType(bs, out, gt));
+                if ((op == DIV) && (gt == GenTypeInt)) {
+                    ret = StdInt(ret);
+                }
+            }
+
+            bs.expressionDepth -= 1;
+
+            if (ret != null) {
+                return ret;
+            }
+        }
         
         // Return a constant
         return Constant(Util.randomConstant(gt));
+    }
+
+    private static function randomMathOp() : MathOp
+    {
+        switch (Random.random() % 4) {
+        case 0:
+            return ADD;
+        case 1:
+            return SUB;
+        case 2:
+            return MUL;
+        default:
+            return DIV;
+        }
+    }
+
+    private static function randomBoolOp(gt : GenType) : BoolOp
+    {
+        if (gt == GenTypeBool) {
+            switch (Random.random() % 4) {
+            case 0:
+                return EQ;
+            case 1:
+                return NE;
+            case 2:
+                return AND;
+            default:
+                return OR;
+            }
+        }
+        else {
+            if (Random.chance(50)) {
+                return EQ;
+            }
+            else {
+                return NE;
+            }
+        }
+    }
+
+    public static function randomFor(bs : BlockState,
+                                     out : Array<GenStatement>) : GenStatement
+    {
+        var ivar = "ivar" + bs.nextVarNumber++;
+        var begin = Random.random() % 10;
+        var sub = new Array<GenStatement>();
+        randomBlock(bs, sub);
+        return For(ivar, begin, (Random.random() % 100) + begin + 1, sub);
+    }
+
+    public static function randomIf(bs : BlockState,
+                                    out : Array<GenStatement>) : GenStatement
+    {
+        var condition = randomExpressionOfType(bs, out, GenTypeBool);
+        var ifBlock = new Array<GenStatement>();
+        randomBlock(bs, ifBlock);
+        var elseBlock : Null<Array<GenStatement>> = null;
+        if (Random.chance(33)) {
+            elseBlock = new Array<GenStatement>();
+            randomBlock(bs, elseBlock);
+        }
+        return If(condition, ifBlock, elseBlock);
     }
 
     public static function randomAssignment(bs : BlockState, 
@@ -156,6 +269,33 @@ class GenStatementHelpers
             out.writeString(" = ");
             GenExpressionHelpers.emit(expression, out);
             out.writeString(";\n");
+        case For(ivar, begin, end, block):
+            out.writeString("for (");
+            out.writeString(ivar);
+            out.writeString(" in " + begin + " ... " + end + ") {\n");
+            for (s in block) {
+                GenStatementHelpers.emit(s, out, indent + 4);
+            }
+            Util.indent(out, indent);
+            out.writeString("}\n");
+        case If(condition, ifBlock, elseBlock):
+            out.writeString("if (");
+            GenExpressionHelpers.emit(condition, out);
+            out.writeString(") {\n");
+            for (s in ifBlock) {
+                GenStatementHelpers.emit(s, out, indent + 4);
+            }
+            Util.indent(out, indent);
+            out.writeString("}\n");
+            if (elseBlock != null) {
+                Util.indent(out, indent);
+                out.writeString("else {\n");
+                for (s in elseBlock) {
+                    GenStatementHelpers.emit(s, out, indent + 4);
+                }
+                Util.indent(out, indent);
+                out.writeString("}\n");
+            }
         case Return(exp):
             out.writeString("return (");
             GenExpressionHelpers.emit(exp, out);

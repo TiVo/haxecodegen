@@ -16,7 +16,28 @@
 
 enum GenExpression
 {
+    BinaryBoolean(left : GenExpression, op : BoolOp, right : GenExpression);
+    BinaryMath(left : GenExpression, op : MathOp, right : GenExpression);
     Constant(c : Constant);
+    StdInt(exp : GenExpression); // Std.int(exp)
     Variable(name : String);
     FunctionCall(f : GenFunction, args : Array<GenExpression>);
+}
+
+
+enum BoolOp
+{
+    EQ;  // ==
+    NE;  // !=
+    AND; // &&
+    OR;  // ||
+}
+
+
+enum MathOp
+{
+    ADD; // +
+    SUB; // -
+    MUL; // *
+    DIV; // /
 }

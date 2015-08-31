@@ -30,6 +30,9 @@ class BlockState
     // Prevents function call loops
     public var allowFunctionCall : Bool;
     public var inStaticFunction : Bool;
+    public var statementCount : Int;
+    public var nextVarNumber : Int;
+    public var expressionDepth : Int;
 
     public function new(gc : GenClass, gf : GenFunction)
     {
@@ -56,6 +59,8 @@ class BlockState
         this.nextLocalNumber = 0;
         this.allowFunctionCall = true;
         this.inStaticFunction = gf._static;
+        this.nextVarNumber = 0;
+        this.expressionDepth = 0;
     }
 
     public function randomReadableVariable(gt : Null<GenType>)

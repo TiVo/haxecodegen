@@ -81,7 +81,24 @@ class GenFunction
         }
         this.body = [ ];
         var bs = new BlockState(gc, this);
-        GenStatementHelpers.randomBlock(bs, this.body);
+        // 2% chance of no statements in block
+        if (Random.chance(98)) {
+            // 50% chance of 1 - 5 statements
+            if (Random.chance(50)) {
+                bs.statementCount = (Random.random() % 5) + 1;
+            }
+            // 40% chance of 6 - 15 statements
+            else if (Random.chance(80)) {
+                bs.statementCount = (Random.random() % (15 - 6)) + 6;
+            }
+            // 10% chance of 16 - 80 statements
+            else {
+                bs.statementCount = (Random.random() % (80 - 16)) + 16;
+            }
+            while (bs.statementCount > 0) {
+                GenStatementHelpers.randomBlock(bs, this.body);
+            }
+        }
         // Make a default return if necessary, in case the function didn't
         // otherwise return
         if (this.returns != null) {

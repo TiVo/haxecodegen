@@ -18,9 +18,8 @@ enum GenStatement
 {
     Var(name : String, type : GenType, initialValue : GenExpression);
     Assignment(path : String, expression : GenExpression);
-#if 0
+    For(ivar : String, begin : Int, end : Int, block : Array<GenStatement>);
     If(condition : GenExpression, ifBlock : Array<GenStatement>,
        elseBlock : Null<Array<GenStatement>>);
-#end
     Return(expression : GenExpression);
 }

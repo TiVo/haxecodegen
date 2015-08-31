@@ -19,8 +19,42 @@ class GenExpressionHelpers
     public static function emit(stmt : GenExpression, out : haxe.io.Output)
     {
         switch (stmt) {
+        case BinaryBoolean(left, op, right):
+            out.writeString("(");
+            emit(left, out);
+            switch (op) {
+            case EQ:
+                out.writeString(" == ");
+            case NE:
+                out.writeString(" != ");
+            case AND:
+                out.writeString(" && ");
+            case OR:
+                out.writeString(" || ");
+            }
+            emit(right, out);
+            out.writeString(")");
+        case BinaryMath(left, op, right):
+            out.writeString("(");
+            emit(left, out);
+            switch (op) {
+            case ADD:
+                out.writeString(" + ");
+            case SUB:
+                out.writeString(" - ");
+            case MUL:
+                out.writeString(" * ");
+            case DIV:
+                out.writeString(" / ");
+            }
+            emit(right, out);
+            out.writeString(")");
         case Constant(c):
             out.writeString(Util.constantToString(c));
+        case StdInt(exp):
+            out.writeString("Std.int(");
+            emit(exp, out);
+            out.writeString(")");
         case Variable(name):
             out.writeString(name);
         case FunctionCall(f, args):
