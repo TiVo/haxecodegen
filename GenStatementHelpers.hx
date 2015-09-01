@@ -387,8 +387,9 @@ class GenStatementHelpers
                 var s = Util.randomStatic(null);
                 if ((s != null) && s.field.isWriteable()) {
                     // If it's dynamic and writable, do a dynamic property set
-                    if (s.field.isWriteable() &&
-                        (s.field.type == GenTypeDynamic)) {
+                    if ((s.field.type == GenTypeDynamic) &&
+                        s.field.isWriteable() &&
+                        s.field.isReadable()) {
                         return Assignment(s.gc.fullname + "." + s.field.name +
                                           "." + Random.identifier(false),
                                           randomExpressionOfType
