@@ -28,6 +28,9 @@ class GenClass
     public var functions(default, null) : Array<GenFunction>;
     public var fields(default, null) : Array<GenField>;
 
+    public static var gClasses(default, null) : Array<GenClass> =
+                                                new Array<GenClass>();
+
     // Create the classes, with no inheritence hierarchy or other features
     public static function generate()
     {
@@ -76,6 +79,13 @@ class GenClass
     {
         for (genclass in gClasses) {
             genclass.createThisFunctions();
+        }
+    }
+
+    public static function createRunStatementsFunctions()
+    {
+        for (genclass in gClasses) {
+            genclass.createThisRunStatementsFunctions();
         }
     }
 
@@ -288,6 +298,13 @@ class GenClass
         }
     }
 
+    private function createThisRunStatementsFunctions()
+    {
+        var func = new GenFunction().makeRunStatements(this);
+        func.makeBody(this);
+        this.functions.push(func);
+    }
+
     private function createThisInterfaceFunctions(i : GenInterface)
     {
         for (isuper in i._extends) {
@@ -378,22 +395,11 @@ class GenClass
         if (this.name == "Main") {
             outi(4, "public static function main()\n");
             outi(4, "{\n");
-            // Temporary - make an array of every class
-            outi(8, "var allClasses : Array<Dynamic> = [ ");
-            var needComma = false;
-            for (gc in gClasses) {
-                if (needComma) {
-                    out(", ");
-                }
-                needComma = true;
-                out("new " + gc.fullname + "()");
-            }
-            out("\n");
-            outi(8, "];\n");
+            outi(4, "    Statics.run();\n");
             outi(4, "}\n\n");
         }
 
-        // Temporary - emit empty constructor, which every class has
+        // Emit empty constructor, which every class has.
         outi(4, "public function new()\n");
         outi(4, "{\n");
         if (this._super != null) {
@@ -468,9 +474,6 @@ class GenClass
 
     private var mFunctionMap : haxe.ds.StringMap<GenFunction>;
 
-    private static var gClasses : Array<GenClass> = new Array<GenClass>();
-
     private static var gClassMap : haxe.ds.StringMap<GenClass> = 
         new haxe.ds.StringMap<GenClass>();
 }
-

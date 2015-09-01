@@ -54,7 +54,8 @@ class BlockState
         }
         this.functions = [ ];
         for (f in gc.functions) {
-            if (!gf._static || (gf._static && f._static)) {
+            if (!gf._static || (gf._static && f._static) &&
+                (f.name != "runStatements")) {
                 this.functions.push(f);
             }
         }

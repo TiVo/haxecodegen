@@ -17,21 +17,24 @@
 class Options
 {
     // Set to true if -h, -help, or --help was set
-    public static var help : Bool;
+    public static var help : Bool = false;
     // Random seed to use
-    public static var randomSeed : Int;
+    public static var randomSeed : Int = 
+        Std.int((haxe.Timer.stamp() * 1000) % (0xFFFFFFF));
     // Output directory to emit generated classes into
-    public static var outdir : String;
+    public static var outdir : String = "gen.out";
     // Number of classes to generate
-    public static var classCount : Int; // default 3000
+    public static var classCount : Int = 3000;
     // Number of interfaces to generate
-    public static var interfaceCount : Int; // default 1750
+    public static var interfaceCount : Int = 1750;
     // Number of enums to generate
-    public static var enumCount : Int; // default 200
+    public static var enumCount : Int = 200;
     // Number of anonymous classes to generate
-    public static var anonymousClassCount : Int; // default 15
+    public static var anonymousClassCount : Int = 15;
     // Maximum class/interface hierarchy depth
-    public static var maxExtendsDepth : Int; // default 10
+    public static var maxExtendsDepth : Int = 10;
+    // Number of statements for the resulting program to run
+    public static var statementCount : Int = 1000000; // default 
 
     public static var usageString = "Usage: ";
 
@@ -44,16 +47,6 @@ class Options
      **/
     public static function load() : Bool
     {
-        // Initialize defaults
-        help = false;
-        randomSeed = Std.int((haxe.Timer.stamp() * 1000) % (0xFFFFFFF));
-        outdir = "gen.out";
-        classCount = 3000;
-        interfaceCount = 1750;
-        enumCount = 200;
-        anonymousClassCount = 15;
-        maxExtendsDepth = 10;
-
         var argv = Sys.args();
         var iter = 0 ... argv.length;
         try {

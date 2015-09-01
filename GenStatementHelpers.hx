@@ -318,12 +318,16 @@ class GenStatementHelpers
     {
         var enm : GenEnum = Random.chance(50) ? GenEnum.randomEnum() : null;
 
+        var exp = null;
+        var cases = new Array<GenExpression>();
+        var blocks = new Array<Array<GenStatement>>();
+        var caseCount = (Random.random() % 10) + 1;
+        var defaultBlock = new Array<GenStatement>();
+
         if (enm == null) {
             // Use integers
-            var exp = randomExpressionOfType(bs, out, GenTypeInt);
-            var cases = new Array<GenExpression>();
-            var blocks = new Array<Array<GenStatement>>();
-            var caseCount = (Random.random() % 10) + 1;
+            exp = BinaryMath(randomExpressionOfType(bs, out, GenTypeInt),
+                             MOD, Constant(ConstantInt(100)));
             var alreadyCases = new haxe.ds.IntMap<Bool>();
             while (caseCount-- > 0) {
                 var i = 0;
@@ -340,13 +344,9 @@ class GenStatementHelpers
                 randomBlock(bs, block);
                 blocks.push(block);
             }
-            return Switch(exp, cases, blocks);
         }
         else {
-            var exp = randomExpressionOfType(bs, out, GenTypeEnum(enm));
-            var cases = new Array<GenExpression>();
-            var blocks = new Array<Array<GenStatement>>();
-            var caseCount = (Random.random() % 10) + 1;
+            exp = randomExpressionOfType(bs, out, GenTypeEnum(enm));
             var alreadyCases = new haxe.ds.StringMap<Bool>();
             while (caseCount-- > 0) {
                 var captures = new Array<{ name : String, type : GenType,
@@ -368,8 +368,11 @@ class GenStatementHelpers
                     }
                 }
             }
-            return Switch(exp, cases, blocks);
         }
+        
+        bs.statementCount += (Random.random() % 4) + 1;
+        randomBlock(bs, defaultBlock);
+        return Switch(exp, cases, blocks, defaultBlock);
     }
 
     public static function randomAssignment(bs : BlockState, 
@@ -486,7 +489,7 @@ class GenStatementHelpers
             out.writeString("return (");
             GenExpressionHelpers.emit(exp, out);
             out.writeString(");\n");
-        case Switch(exp, cases, blocks):
+        case Switch(exp, cases, blocks, defaultBlock):
             out.writeString("switch (");
             GenExpressionHelpers.emit(exp, out);
             out.writeString(") {\n");
@@ -504,9 +507,15 @@ class GenStatementHelpers
             }
             Util.indent(out, indent);
             out.writeString("default:\n");
+            var j = 0;
+            while (j < defaultBlock.length) {
+                emit(defaultBlock[j++], out, indent + 4);
+            }
             Util.indent(out, indent);
             out.writeString("}\n");
         }
+        Util.indent(out, indent);
+        out.writeString("Statics.one();\n");
     }
 
     private static function randomEnumCase

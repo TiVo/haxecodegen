@@ -156,6 +156,9 @@ class HaxeCodeGenerator
         // Fill class functions with statements
         GenClass.fillFunctions();
 
+        // Now generate the runStatements functions
+        GenClass.createRunStatementsFunctions();
+
         // Emit classes
         GenClass.emit();
 
@@ -164,6 +167,68 @@ class HaxeCodeGenerator
 
         // Emit enums
         GenEnum.emit();
+
+        // Emit the "statics" class
+        var path = Options.outdir + "/Statics.hx";
+        var out;
+        try {
+            out = sys.io.File.write(path);
+        }
+        catch (e : Dynamic) {
+            Util.err("Failed to create file: " + path + ": " + e);
+            return -1;
+        }
+
+        out.writeString("class Statics\n{\n");
+        out.writeString("    public static var gStatementCount = 0;\n");
+        out.writeString("\n");
+        out.writeString("    public static function one()\n");
+        out.writeString("    {\n");
+        out.writeString("        if (++gStatementCount == " +
+                        Options.statementCount + ") {\n");
+        out.writeString("            throw \"DONE\";\n");
+        out.writeString("        }\n");
+        out.writeString("    }\n");
+        out.writeString("\n");
+        out.writeString("    public static function run()\n");
+        out.writeString("    {\n");
+        // Create a random class and have it run through a bunch
+        // of iterations
+        out.writeString("        try {\n");
+        out.writeString("            var i = 0;\n");
+        out.writeString("            while (true) {\n");
+        out.writeString("                var func : (Void -> Void) = null;\n");
+        out.writeString("                switch (i) {\n");
+        var i = 0;
+        while (i < GenClass.gClasses.length) {
+            var _class = GenClass.gClasses[i];
+            out.writeString("                    case " + i + ":\n");
+            out.writeString("                        func = " +
+                            _class.fullname + ".runStatements;\n");
+            i += 1;
+        }
+        out.writeString("                }\n");
+        out.writeString("                i = i + 1;\n");
+        out.writeString("                if (i == " + 
+                        GenClass.gClasses.length + ") {\n");
+        out.writeString("                    i = 0;\n");
+        out.writeString("                }\n");
+        out.writeString("                var j = 0;\n");
+        out.writeString("                while (j++ < 100) {\n");
+        out.writeString("                    func();\n");
+        out.writeString("                }\n");
+        out.writeString("                trace(gStatementCount);\n");
+        out.writeString("            }\n");
+        out.writeString("         }\n");
+        out.writeString("         catch (e : String) {\n");
+        out.writeString("             if (e == \"DONE\") {\n");
+        out.writeString("                 return;\n");
+        out.writeString("             }\n");
+        out.writeString("             throw e;\n");
+        out.writeString("         }\n");
+        out.writeString("    }\n");
+        out.writeString("}\n");
+        out.close();
 
         // Emit the build scripts
 

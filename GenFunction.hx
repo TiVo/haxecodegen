@@ -20,13 +20,13 @@
 class GenFunction
 {
     public var name(default, null) : String;
+    // String to use when calling, includes static class name if necessary
+    public var callAs(default, null) : String;
     public var _static(default, null) : Bool;
     public var _inline(default, null) : Bool;
     public var args(default, null) : Array<{ name : String, type : GenType }>;
     public var returns(default, null) : Null<GenType>;
     public var body(default, null) : Null<Array<GenStatement>>;
-    // String to use when calling, includes static class name if necessary
-    public var callAs(default, null) : String;
 
     public function new()
     {
@@ -78,6 +78,18 @@ class GenFunction
         this.args = func.args.copy();
         this.returns = func.returns;
         this.body = null;
+        return this;
+    }
+
+    public function makeRunStatements(forClass : GenClass) : GenFunction
+    {
+        this.name = "runStatements";
+        this.callAs = forClass.fullname + "." + this.name;
+        this._static = true;
+        this._inline = false;
+        this.args = [ ];
+        this.returns = null;
+        this.body = [ ];
         return this;
     }
 

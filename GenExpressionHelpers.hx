@@ -80,6 +80,8 @@ class GenExpressionHelpers
                 out.writeString(" * ");
             case DIV:
                 out.writeString(" / ");
+            case MOD:
+                out.writeString(" % ");
             }
             emit(right, out);
             out.writeString(")");

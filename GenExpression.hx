@@ -47,4 +47,5 @@ enum MathOp
     SUB; // -
     MUL; // *
     DIV; // /
+    MOD; // %
 }

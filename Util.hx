@@ -117,7 +117,8 @@ class Util
         case GenTypeBool:
             return ConstantBool(Random.chance(50));
         case GenTypeInt:
-            return ConstantInt(Random.random());
+            return ConstantInt((Random.chance(50) ? 1 : -1) *
+                               (Random.random() % 2147483647));
         case GenTypeFloat:
             return ConstantFloat(((Random.chance(50) ? 1.0 : -1.0) *
                                   Random.random()) / Random.random());
