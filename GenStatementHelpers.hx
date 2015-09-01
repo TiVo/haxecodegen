@@ -514,8 +514,12 @@ class GenStatementHelpers
             Util.indent(out, indent);
             out.writeString("}\n");
         }
-        Util.indent(out, indent);
-        out.writeString("Statics.one();\n");
+        switch (stmt) {
+        case Return(_):
+        default:
+            Util.indent(out, indent);
+            out.writeString("Statics.one();\n");
+        }
     }
 
     private static function randomEnumCase
