@@ -40,13 +40,6 @@ class GenStatementHelpers
                                            out : Array<GenStatement>)
         : GenStatement
     {
-        // If there is a return type, then a 2% chance of a return statement
-        if (bs.returnType != null) {
-            if (Random.chance(2)) {
-                return Return(randomExpressionOfType(bs, out, bs.returnType));
-            }
-        }
-        
         if (bs.depth > 3) {
             return randomAssignment(bs, out);
         }
@@ -55,9 +48,16 @@ class GenStatementHelpers
         case 0:
             return randomFor(bs, out);
         case 1:
-            // Find a function to call at random
-            while (true) {
-                var func = GenClass.randomClass().randomFunction();
+            if (bs.allowFunctionCall) {
+                // Find a function to call at random
+                var func = null;
+                if ((bs.functions.length > 0) && Random.chance(50)) {
+                    // Look in the current class for a random function to call
+                    func = bs.functions[Random.random() % bs.functions.length];
+                }
+                else {
+                    func = Util.randomStaticFunction(Util.randomType());
+                }
                 if (func != null) {
                     var exp = randomFunctionCall(bs, out, func);
                     switch (exp) {
@@ -71,8 +71,9 @@ class GenStatementHelpers
         case 2:
             return randomIf(bs, out);
         default:
-            return randomAssignment(bs, out);
         }
+
+        return randomAssignment(bs, out);
     }
 
     public static function randomExpressionOfType(bs : BlockState, 
@@ -154,8 +155,95 @@ class GenStatementHelpers
             }
         }
         
-        // Return a constant
-        return Constant(Util.randomConstant(gt));
+        switch (gt) {
+        case GenTypeDynamic:
+            if (Random.chance(10)) {
+                return Constant(ConstantNull);
+            }
+            else {
+                return randomExpressionOfType(bs, out, Util.randomType());
+            }
+        case GenTypeBool:
+            return Constant(ConstantBool(Random.chance(50)));
+        case GenTypeInt:
+            return Constant(ConstantInt(Random.random()));
+        case GenTypeFloat:
+            return Constant(ConstantFloat(((Random.chance(50) ? 1.0 : -1.0) *
+                                           Random.random()) / Random.random()));
+        case GenTypeString:
+            return Constant(ConstantString(Random.identifier(false)));
+        case GenTypeInterface(ifc):
+            if (Random.chance(10)) {
+                return Constant(ConstantNull);
+            }
+            // Find a random class implementing that interface, if there is one
+            var c = ifc.randomImplementor();
+            if (c == null) {
+                return Constant(ConstantNull);
+            }
+            return randomClassInstance(bs, out, c);
+        case GenTypeClass(cls):
+            return randomClassInstance(bs, out, cls);
+        case GenTypeEnum(enm):
+            if ((bs.enumDepth > 2) || Random.chance(5)) {
+                return Constant(ConstantNull);
+            }
+            var elem = enm.elements[Random.random() % enm.elements.length];
+            var args = new Array<GenExpression>();
+            if (elem.parameters != null) {
+                bs.enumDepth += 1;
+                var i = 0;
+                while (i < elem.parameters.length) {
+                    args.push(randomExpressionOfType
+                              (bs, out, elem.parameters[i++].type));
+                }
+                bs.enumDepth -= 1;
+            }
+            return EnumMember(enm, elem, args);
+        case GenTypeClosure(c_args, c_returns):
+            // Closures bring too many extra complications, don't generate
+            // any for now
+            return Constant(ConstantNull);
+        case GenTypeArray(t):
+            if (Random.chance(25)) {
+                return Constant(ConstantNull);
+            }
+            var arr = new Array<GenExpression>();
+            var count = Random.random() % 10;
+            while (count-- > 0) {
+                arr.push(randomExpressionOfType(bs, out, t));
+            }
+            return Array(arr);
+        case GenTypeMap(k, v):
+            // Too hard to prevent duplicate keys, so just always use null
+            return Constant(ConstantNull);
+        case GenTypeAnonymous(names, types):
+            if (Random.chance(10)) {
+                return Constant(ConstantNull);
+            }
+            var values = new Array<GenExpression>();
+            var i = 0;
+            while (i < types.length) {
+                values.push(randomExpressionOfType(bs, out, types[i++]));
+            }
+            return Anonymous(names, values);
+        }
+    }
+
+    private static function randomClassInstance(bs : BlockState, 
+                                                out : Array<GenStatement>,
+                                                cls : GenClass)
+        : GenExpression
+    {
+        // 90% chance of trying to find an existing one
+        if (!bs.noSearch && Random.chance(90)) {
+            bs.noSearch = true;
+            var ret = randomExpressionOfType(bs, out, GenTypeClass(cls));
+            bs.noSearch = false;
+            return ret;
+        }
+        
+        return New(cls);
     }
 
     private static function randomMathOp() : MathOp
@@ -199,7 +287,7 @@ class GenStatementHelpers
     public static function randomFor(bs : BlockState,
                                      out : Array<GenStatement>) : GenStatement
     {
-        var ivar = "ivar" + bs.nextVarNumber++;
+        var ivar = "local" + bs.nextLocalNumber++;
         var begin = Random.random() % 10;
         var sub = new Array<GenStatement>();
         randomBlock(bs, sub);
@@ -255,7 +343,7 @@ class GenStatementHelpers
         var name = "local" + bs.nextLocalNumber++;
         var type = Util.randomType();
 
-        return Var(name, type, Constant(Util.randomConstant(type)));
+        return Var(name, type, randomExpressionOfType(bs, out, type));
     }
 
     public static function randomFunctionCall(bs : BlockState,

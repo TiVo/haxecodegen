@@ -137,6 +137,9 @@ class HaxeCodeGenerator
         // Define interface hierarchy
         GenInterface.createHierarchy();
 
+        // Define enum elements
+        GenEnum.createElements();
+
         // Define interface functions
         GenInterface.createFunctions();
 
@@ -149,8 +152,8 @@ class HaxeCodeGenerator
         // Define class fields
         GenClass.createFields();
 
-        // Define enum elements
-        GenEnum.createElements();
+        // Collect implementation and inheritence relationships
+        GenClass.collectRelationships();
 
         // Fill class functions with statements
         GenClass.fillFunctions();

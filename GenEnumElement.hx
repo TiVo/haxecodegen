@@ -30,8 +30,11 @@ class GenEnumElement
             var n = (Random.random() % 6) + 1;
             var i = 0;
             while (i < n) {
-                parameters.push({ name : "param" + i, 
-                                  type : Util.randomType() });
+                var type = Util.randomType();
+                if (type == GenTypeDynamic) {
+                    type = GenTypeInt;
+                }
+                parameters.push({ name : "param" + i, type : type });
                 i += 1;
             }
         }
@@ -52,7 +55,6 @@ class GenEnumElement
                 }
                 var p = this.parameters[i++];
                 out.writeString(p.name + " : " + Util.typeString(p.type));
-                i += 1;
             }
             out.writeString(");\n");
         }

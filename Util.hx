@@ -34,7 +34,7 @@ class Util
 
     public static function randomType() : GenType
     {
-        return randomSpecificType(true, 2, true, true);
+        return randomTypeOfDepth(2, true);
     }
 
     public static inline function typesEqual(gt1 : GenType,
@@ -113,7 +113,6 @@ class Util
     {
         switch (gt) {
         case GenTypeDynamic:
-            // For now ...
             return ConstantNull;
         case GenTypeBool:
             return ConstantBool(Random.chance(50));
@@ -125,25 +124,18 @@ class Util
         case GenTypeString:
             return ConstantString(Random.identifier(false));
         case GenTypeInterface(ifc):
-            // For now ...
             return ConstantNull;
         case GenTypeClass(cls):
-            // For now ...
             return ConstantNull;
         case GenTypeEnum(enm):
-            // For now ...
             return ConstantNull;
         case GenTypeClosure(args, returns):
-            // For now ...
             return ConstantNull;
         case GenTypeArray(t):
-            // For now
             return ConstantNull;
         case GenTypeMap(k, v):
-            // For now
             return ConstantNull;
         case GenTypeAnonymous(names, types):
-            // For now
             return ConstantNull;
         }
     }
@@ -248,16 +240,28 @@ class Util
         }
     }
 
-    private static function randomSpecificType(allowClosure : Bool,
-                                               arrayDepth : Int,
-                                               allowMap : Bool,
-                                               allowAnonymous : Bool) : GenType
+    private static function randomTypeOfDepth(depth : Int,
+                                              allowDynamic : Bool) : GenType
     {
-        while (true) {
-            var which = Random.random() % 12;
-            switch (which) {
+        if (depth == 0) {
+            switch (Random.random() % 5) {
             case 0:
-                return GenTypeDynamic;
+                return allowDynamic ? GenTypeDynamic : GenTypeInt;
+            case 1:
+                return GenTypeBool;
+            case 2:
+                return GenTypeInt;
+            case 3:
+                return GenTypeFloat;
+            default:
+                return GenTypeString;
+            }
+        }
+
+        while (true) {
+            switch (Random.random() % 12) {
+            case 0:
+                return allowDynamic ? GenTypeDynamic : GenTypeInt;
             case 1:
                 return GenTypeBool;
             case 2:
@@ -279,52 +283,42 @@ class Util
                     return GenTypeEnum(enm);
                 }
             case 8:
-                if (allowClosure) {
-                    var args = new Array<GenType>();
-                    var n = Random.random() % 6;
-                    while (n > 0) {
-                        n -= 1;
-                        args.push(randomSpecificType(false, 1, false, false));
-                    }
-                    return GenTypeClosure
-                        (args, Random.chance(50) ? 
-                         randomSpecificType(false, 1, false, false) : null);
+                var args = new Array<GenType>();
+                var n = Random.random() % 6;
+                while (n > 0) {
+                    n -= 1;
+                    args.push(randomTypeOfDepth(depth - 1, false));
                 }
+                var ret = (Random.chance(50) ?
+                           randomTypeOfDepth(depth - 1, false) : null);
+                return GenTypeClosure(args, ret);
             case 9:
-                if (arrayDepth > 0) {
-                    return GenTypeArray(randomSpecificType
-                                        (true, arrayDepth - 1, true, true));
-                }
+                return GenTypeArray(randomTypeOfDepth(depth - 1, false));
             case 10:
-                if (allowMap) {
-                    // Only allow integer, string, class, and interface keys
-                    var keyType = 
-                        switch (Random.random() % 4) {
-                        case 0:
-                            GenTypeInt;
-                        case 1:
-                            GenTypeString;
-                        case 2:
-                            GenTypeClass(GenClass.randomClass());
-                        default:
-                            GenTypeInterface(GenInterface.randomInterface());
-                        };
-                    return GenTypeMap
-                        (keyType, randomSpecificType(true, 2, false, true));
-                }
+                // Only allow integer, string, class, and interface keys
+                var keyType = 
+                    switch (Random.random() % 4) {
+                    case 0:
+                        GenTypeInt;
+                    case 1:
+                        GenTypeString;
+                    case 2:
+                        GenTypeClass(GenClass.randomClass());
+                    default:
+                        GenTypeInterface(GenInterface.randomInterface());
+                    };
+                return GenTypeMap(keyType, randomTypeOfDepth(depth - 1, false));
             case 11:
-                if (allowAnonymous) {
-                    var names = new Array<String>();
-                    var types = new Array<GenType>();
-                    var n = (Random.random() % 6) + 1;
-                    var i = 0;
-                    while (i < n) {
-                        names.push("elem" + i);
-                        types.push(randomSpecificType(true, 1, true, false));
-                        i += 1;
-                    }
-                    return GenTypeAnonymous(names, types);
+                var names = new Array<String>();
+                var types = new Array<GenType>();
+                var n = (Random.random() % 6) + 1;
+                var i = 0;
+                while (i < n) {
+                    names.push("elem" + i);
+                    types.push(randomTypeOfDepth(depth - 1, false));
+                    i += 1;
                 }
+                return GenTypeAnonymous(names, types);
             }
         }
     }

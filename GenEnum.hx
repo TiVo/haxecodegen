@@ -75,8 +75,7 @@ class GenEnum
         var num = (Random.random() % 20) + 1;
         var i = 0;
         while (i < num) {
-            this.elements.push(new GenEnumElement(simple, this.name, i));
-            i += 1;
+            this.elements.push(new GenEnumElement(simple, this.name, i++));
         }
     }
 

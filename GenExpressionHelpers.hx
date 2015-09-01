@@ -19,6 +19,33 @@ class GenExpressionHelpers
     public static function emit(stmt : GenExpression, out : haxe.io.Output)
     {
         switch (stmt) {
+        case Anonymous(names, values):
+            out.writeString("{ ");
+            var i = 0;
+            while (i < names.length) {
+                if (i > 0) {
+                    out.writeString(", ");
+                }
+                out.writeString(names[i]);
+                out.writeString(" : ");
+                emit(values[i++], out);
+            }
+            out.writeString(" }");
+        case Array(elements):
+            if (elements.length == 0) {
+                out.writeString("[ ]");
+            }
+            else {
+                out.writeString("[ ");
+                var i = 0;
+                while (i < elements.length) {
+                    if (i > 0) {
+                        out.writeString(", ");
+                    }
+                    emit(elements[i++], out);
+                }
+                out.writeString(" ]");
+            }
         case BinaryBoolean(left, op, right):
             out.writeString("(");
             emit(left, out);
@@ -49,8 +76,49 @@ class GenExpressionHelpers
             }
             emit(right, out);
             out.writeString(")");
+        case Closure(args, returns, block):
+            out.writeString("function (");
+            var i = 0;
+            while (i < args.length) {
+                if (i > 0) {
+                    out.writeString(", ");
+                }
+                out.writeString("closure_arg" + i);
+                out.writeString(" : ");
+                out.writeString(Util.typeString(args[i++]));
+            }
+            out.writeString(") : ");
+            if (returns == null) {
+                out.writeString("Void");
+            }
+            else {
+                out.writeString(Util.typeString(returns));
+            }
+            out.writeString("\n        {");
+            i = 0;
+            while (i < block.length) {
+                GenStatementHelpers.emit(block[i++], out, 12);
+            }
+            out.writeString("        }");
         case Constant(c):
             out.writeString(Util.constantToString(c));
+        case EnumMember(enm, el, args):
+            out.writeString(enm.fullname + "." + el.name);
+            if (args.length > 0) {
+                out.writeString("(");
+                var i = 0;
+                while (i < args.length) {
+                    if (i > 0) {
+                        out.writeString(", ");
+                    }
+                    emit(args[i++], out);
+                }
+                out.writeString(")");
+            }
+        case New(cls):
+            out.writeString("new ");
+            out.writeString(cls.fullname);
+            out.writeString("()");
         case StdInt(exp):
             out.writeString("Std.int(");
             emit(exp, out);

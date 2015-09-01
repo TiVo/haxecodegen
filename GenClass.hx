@@ -93,6 +93,13 @@ class GenClass
         }
     }
 
+    public static function collectRelationships()
+    {
+        for (genclass in gClasses) {
+            genclass.collectThisRelationships();
+        }
+    }
+
     public function isOrExtendsClass(c : GenClass) : Bool
     {
         var t = this;
@@ -262,9 +269,9 @@ class GenClass
                 // Now pick a random function from ifc to redeclare, if it has
                 // any (otherwise give up)
                 var toRedeclare = c.randomFunction();
-                if ((toRedeclare != null) &&
+                if ((toRedeclare != null) && !toRedeclare._inline &&
                     !mFunctionMap.exists(toRedeclare.name)) {
-                    // Redeclare it in this interface
+                    // Redeclare it in this class
                     var newf = new GenFunction().copySignature(toRedeclare);
                     newf.makeBody(this);
                     this.functions.push(newf);
@@ -310,6 +317,21 @@ class GenClass
     {
         for (f in this.functions) {
             f.makeBody(this);
+        }
+    }
+
+    private function collectThisRelationships()
+    {
+        this.collectImplementedBy(this._implements);
+    }
+
+    private function collectImplementedBy(ifcs : Array<GenInterface>)
+    {
+        var i = 0;
+        while (i < ifcs.length) {
+            ifcs[i].implementedBy(this);
+            collectImplementedBy(ifcs[i]._extends);
+            i += 1;
         }
     }
 

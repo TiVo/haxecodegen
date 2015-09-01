@@ -144,6 +144,23 @@ class GenInterface
         }
     }
 
+    public function randomImplementor() : Null<GenClass>
+    {
+        if (mClassesImplementing.length == 0) {
+            return null;
+        }
+        return mClassesImplementing[Random.random() %
+                                    mClassesImplementing.length];
+    }
+
+    public function implementedBy(c : GenClass)
+    {
+        if (!mClassesImplementingMap.exists(c.name)) {
+            mClassesImplementingMap.set(c.name, true);
+            mClassesImplementing.push(c);
+        }
+    }
+
     private function new(number : Int)
     {
         this._package = GenPackage.get();
@@ -154,6 +171,8 @@ class GenInterface
         this.functions = [ ];
         this.properties = [ ];
         mFunctionMap = new haxe.ds.StringMap<GenFunction>();
+        mClassesImplementing = [ ];
+        mClassesImplementingMap = new haxe.ds.StringMap<Bool>();
     }
 
     // May fail to extend if it happens to hit something already extended or
@@ -213,7 +232,7 @@ class GenInterface
             }
             
             // Generate a new function
-            var newf =new GenFunction().randomSignature(false);
+            var newf = new GenFunction().randomSignature(false);
             this.functions.push(newf);
             mFunctionMap.set(newf.name, newf);
         }
@@ -266,6 +285,9 @@ class GenInterface
     private var mOut : haxe.io.Output;
 
     private var mFunctionMap : haxe.ds.StringMap<GenFunction>;
+
+    private var mClassesImplementing : Array<GenClass>;
+    private var mClassesImplementingMap : haxe.ds.StringMap<Bool>;
 
     private static var gInterfaces : Array<GenInterface> =
         new Array<GenInterface>();

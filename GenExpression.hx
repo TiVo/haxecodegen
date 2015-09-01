@@ -16,9 +16,16 @@
 
 enum GenExpression
 {
+    Anonymous(names : Array<String>, values : Array<GenExpression>);
+    Array(elements : Array<GenExpression>);
     BinaryBoolean(left : GenExpression, op : BoolOp, right : GenExpression);
     BinaryMath(left : GenExpression, op : MathOp, right : GenExpression);
+    // Closure args must be named closure_arg0, closure_arg1, ...
+    Closure(args : Array<GenType>, returns : Null<GenType>,
+            block : Array<GenStatement>);
     Constant(c : Constant);
+    EnumMember(enm : GenEnum, el : GenEnumElement, args : Array<GenExpression>);
+    New(c : GenClass);
     StdInt(exp : GenExpression); // Std.int(exp)
     Variable(name : String);
     FunctionCall(f : GenFunction, args : Array<GenExpression>);

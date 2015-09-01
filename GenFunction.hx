@@ -32,14 +32,16 @@ class GenFunction
     {
     }
 
-    public function randomSignature(allowStatic : Bool) : GenFunction
+    public function randomSignature(forClass : Bool) : GenFunction
     {
         this.name = "func" + gNextNumber++;
-        if (allowStatic) {
+        if (forClass) {
             this._static = Random.chance(10);
+            this._inline = Random.chance(5);
         }
         else {
             this._static = false;
+            this._inline = false;
         }
         this.args = [ ];
         var argnum = 0;
@@ -85,8 +87,9 @@ class GenFunction
         var bs = new BlockState(gc, this);
         // 2% chance of no statements in block
         if (Random.chance(98)) {
+            // If the function is inline, it can have at most 5 statements
             // 50% chance of 1 - 5 statements
-            if (Random.chance(50)) {
+            if (this._inline || Random.chance(50)) {
                 bs.statementCount = (Random.random() % 5) + 1;
             }
             // 40% chance of 6 - 15 statements
@@ -97,9 +100,6 @@ class GenFunction
             else {
                 bs.statementCount = (Random.random() % (80 - 16)) + 16;
             }
-            if ((bs.statementCount < 6) && Random.chance(10)) {
-                this._inline = true;
-            }
             while (bs.statementCount > 0) {
                 GenStatementHelpers.randomBlock(bs, this.body);
             }
@@ -107,7 +107,8 @@ class GenFunction
         // Make a default return if necessary, in case the function didn't
         // otherwise return
         if (this.returns != null) {
-            this.body.push(Return(Constant(Util.randomConstant(this.returns))));
+            this.body.push(Return(GenStatementHelpers.randomExpressionOfType
+                                  (bs, this.body, this.returns)));
         }
     }
 

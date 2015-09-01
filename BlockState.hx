@@ -33,6 +33,8 @@ class BlockState
     public var statementCount : Int;
     public var nextVarNumber : Int;
     public var expressionDepth : Int;
+    public var noSearch : Bool;
+    public var enumDepth : Int;
 
     public function new(gc : GenClass, gf : GenFunction)
     {
@@ -40,13 +42,13 @@ class BlockState
         for (f in gc.fields) {
             if (!gf._static || (gf._static && f._static)) {
                 this.variables.push({ name : f.name, type : f.type,
-                                      r : f.isReadable(),
-                                      w : f.isWriteable() });
+                                     r : f.isReadable(),
+                                     w : f.isWriteable() });
             }
         }
         for (a in gf.args) {
             this.variables.push({ name : a.name, type : a.type,
-                                  r : true, w : true });
+                                 r : true, w : true });
         }
         this.functions = [ ];
         for (f in gc.functions) {
@@ -61,6 +63,8 @@ class BlockState
         this.inStaticFunction = gf._static;
         this.nextVarNumber = 0;
         this.expressionDepth = 0;
+        this.noSearch = false;
+        this.enumDepth = 0;
     }
 
     public function randomReadableVariable(gt : Null<GenType>)
@@ -85,22 +89,30 @@ class BlockState
         // index to end
         var i = index;
         while (i < this.variables.length) {
-            var v = this.variables[i];
-            if ((r && v.r) || (w && v.w) &&
-                ((gt == null) || Util.typesEqual(v.type, gt))) {
+            var v = this.variables[i++];
+            if (r && !v.r) {
+                continue;
+            }
+            if (w && !v.w) {
+                continue;
+            }
+            if ((gt == null) || Util.typesEqual(v.type, gt)) {
                 return v;
             }
-            i += 1;
         }
         // end back to index
         i = 0;
         while (i < index) {
-            var v = this.variables[i];
-            if ((r && v.r) || (w && v.w) &&
-                ((gt == null) || Util.typesEqual(v.type, gt))) {
+            var v = this.variables[i++];
+            if (r && !v.r) {
+                continue;
+            }
+            if (w && !v.w) {
+                continue;
+            }
+            if ((gt == null) || Util.typesEqual(v.type, gt)) {
                 return v;
             }
-            i += 1;
         }
         return null;
     }
