@@ -282,7 +282,7 @@ class GenClass
             }
             
             // Generate a new function
-            var newf = new GenFunction().randomSignature(true);
+            var newf = new GenFunction().randomSignature(this);
             this.functions.push(newf);
             mFunctionMap.set(newf.name, newf);
         }

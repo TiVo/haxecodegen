@@ -32,10 +32,16 @@ class GenFunction
     {
     }
 
-    public function randomSignature(forClass : Bool) : GenFunction
+    public function randomSignature(forClass : Null<GenClass>) : GenFunction
     {
         this.name = "func" + gNextNumber++;
-        if (forClass) {
+        if ((forClass != null) && this._static) {
+            this.callAs = forClass.fullname + "." + this.name;
+        }
+        else {
+            this.callAs = this.name;
+        }
+        if (forClass != null) {
             this._static = Random.chance(10);
             this._inline = Random.chance(5);
         }
@@ -66,6 +72,7 @@ class GenFunction
     public function copySignature(func : GenFunction) : GenFunction
     {
         this.name = func.name;
+        this.callAs = func.callAs;
         this._static = func._static;
         this._inline = func._inline;
         this.args = func.args.copy();
@@ -77,12 +84,6 @@ class GenFunction
     // gc is the class containing the function
     public function makeBody(gc : GenClass)
     {
-        if (this._static) {
-            this.callAs = gc.fullname + "." + this.name;
-        }
-        else {
-            this.callAs = this.name;
-        }
         this.body = [ ];
         var bs = new BlockState(gc, this);
         // 2% chance of no statements in block
@@ -92,13 +93,13 @@ class GenFunction
             if (this._inline || Random.chance(50)) {
                 bs.statementCount = (Random.random() % 5) + 1;
             }
-            // 40% chance of 6 - 15 statements
+            // 40% chance of 6 - 10 statements
             else if (Random.chance(80)) {
-                bs.statementCount = (Random.random() % (15 - 6)) + 6;
+                bs.statementCount = (Random.random() % (10 - 6)) + 6;
             }
-            // 10% chance of 16 - 80 statements
+            // 10% chance of 11 - 20 statements
             else {
-                bs.statementCount = (Random.random() % (80 - 16)) + 16;
+                bs.statementCount = (Random.random() % (20 - 11)) + 11;
             }
             while (bs.statementCount > 0) {
                 GenStatementHelpers.randomBlock(bs, this.body);

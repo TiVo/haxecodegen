@@ -16,6 +16,13 @@
 
 class GenExpressionHelpers
 {
+    public static function toString(exp : GenExpression) : String
+    {
+        var out = new haxe.io.BytesOutput();
+        emit(exp, out);
+        return out.getBytes().toString();
+    }
+
     public static function emit(stmt : GenExpression, out : haxe.io.Output)
     {
         switch (stmt) {

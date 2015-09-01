@@ -23,4 +23,6 @@ enum GenStatement
     If(condition : GenExpression, ifBlock : Array<GenStatement>,
        elseBlock : Null<Array<GenStatement>>);
     Return(expression : GenExpression);
+    Switch(exp : GenExpression, cases : Array<GenExpression>,
+           blocks : Array<Array<GenStatement>>);
 }

@@ -71,11 +71,9 @@
  *
  * - templates
  * - exception handling (try/catch/throw)
- * - Dynamic types (casting to/from, as well as setting values on/getting
- *                  values from)
+ * - Dynamic types (casting to/from, as well as getting values from)
  * - closures
  * - functions with varargs
- * - switch pattern matching (simple and complex)
  * - @:unreflective (to evaluate effectiveness)
  * - @:unreflective inline (to evaluate effectiveness)
  * - Bytes and ByteData classes

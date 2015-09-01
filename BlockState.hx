@@ -35,6 +35,8 @@ class BlockState
     public var expressionDepth : Int;
     public var noSearch : Bool;
     public var enumDepth : Int;
+    public var captures : Array<Array<{ name : String, type : GenType,
+                                        r : Bool, w : Bool }>>;
 
     public function new(gc : GenClass, gf : GenFunction)
     {
@@ -65,6 +67,7 @@ class BlockState
         this.expressionDepth = 0;
         this.noSearch = false;
         this.enumDepth = 0;
+        this.captures = [ ];
     }
 
     public function randomReadableVariable(gt : Null<GenType>)
@@ -80,16 +83,37 @@ class BlockState
     }
 
     private function randomVariable(gt : Null<GenType>, r : Bool, w : Bool)
-        : Null<{ name : String, type : GenType }>
+        : Null<{ name : String, type : GenType, r : Bool, w : Bool }>
     {
+        var i = this.captures.length;
+        while (i-- > 0) {
+            var captures = this.captures[i];
+            var idx = ((captures.length == 0) ?
+                       0 : (Random.random() % captures.length));
+            var j = idx;
+            do {
+                j = j + 1;
+                if (j == captures.length) {
+                    j = 0;
+                }
+                var v = captures[j];
+                if ((gt == null) || Util.typesEqual(v.type, gt)) {
+                    return v;
+                }
+            } while (j != idx);
+        }
         if (this.variables.length == 0) {
             return null;
         }
-        var index = Random.random() % this.variables.length;
-        // index to end
+        var index = ((this.variables.length == 0) ?
+                     0 : (Random.random() % this.variables.length));
         var i = index;
-        while (i < this.variables.length) {
-            var v = this.variables[i++];
+        do {
+            i = i + 1;
+            if (i == this.variables.length) {
+                i = 0;
+            }
+            var v = this.variables[i];
             if (r && !v.r) {
                 continue;
             }
@@ -99,21 +123,7 @@ class BlockState
             if ((gt == null) || Util.typesEqual(v.type, gt)) {
                 return v;
             }
-        }
-        // end back to index
-        i = 0;
-        while (i < index) {
-            var v = this.variables[i++];
-            if (r && !v.r) {
-                continue;
-            }
-            if (w && !v.w) {
-                continue;
-            }
-            if ((gt == null) || Util.typesEqual(v.type, gt)) {
-                return v;
-            }
-        }
+        } while (i != index);
         return null;
     }
 }

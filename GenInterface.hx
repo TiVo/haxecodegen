@@ -232,7 +232,7 @@ class GenInterface
             }
             
             // Generate a new function
-            var newf = new GenFunction().randomSignature(false);
+            var newf = new GenFunction().randomSignature(null);
             this.functions.push(newf);
             mFunctionMap.set(newf.name, newf);
         }

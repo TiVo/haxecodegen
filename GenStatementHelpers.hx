@@ -44,10 +44,10 @@ class GenStatementHelpers
             return randomAssignment(bs, out);
         }
 
-        switch (Random.random() % 4) {
+        switch (Random.random() % 10) {
         case 0:
             return randomFor(bs, out);
-        case 1:
+        case 1, 2, 3:
             if (bs.allowFunctionCall) {
                 // Find a function to call at random
                 var func = null;
@@ -68,8 +68,10 @@ class GenStatementHelpers
                     }
                 }
             }
-        case 2:
+        case 4, 5, 6:
             return randomIf(bs, out);
+        case 7:
+            return randomSwitch(bs, out);
         default:
         }
 
@@ -290,6 +292,7 @@ class GenStatementHelpers
         var ivar = "local" + bs.nextLocalNumber++;
         var begin = Random.random() % 10;
         var sub = new Array<GenStatement>();
+        bs.statementCount += 1;
         randomBlock(bs, sub);
         return For(ivar, begin, (Random.random() % 100) + begin + 1, sub);
     }
@@ -303,9 +306,70 @@ class GenStatementHelpers
         var elseBlock : Null<Array<GenStatement>> = null;
         if (Random.chance(33)) {
             elseBlock = new Array<GenStatement>();
+            bs.statementCount += 1;
             randomBlock(bs, elseBlock);
         }
         return If(condition, ifBlock, elseBlock);
+    }
+
+    public static function randomSwitch(bs : BlockState, 
+                                        out : Array<GenStatement>)
+        : GenStatement
+    {
+        var enm : GenEnum = Random.chance(50) ? GenEnum.randomEnum() : null;
+
+        if (enm == null) {
+            // Use integers
+            var exp = randomExpressionOfType(bs, out, GenTypeInt);
+            var cases = new Array<GenExpression>();
+            var blocks = new Array<Array<GenStatement>>();
+            var caseCount = (Random.random() % 10) + 1;
+            var alreadyCases = new haxe.ds.IntMap<Bool>();
+            while (caseCount-- > 0) {
+                var i = 0;
+                while (true) {
+                    i = Random.random() % 100;
+                    if (!alreadyCases.exists(i)) {
+                        alreadyCases.set(i, true);
+                        break;
+                    }
+                }
+                cases.push(Constant(ConstantInt(i)));
+                var block = new Array<GenStatement>();
+                bs.statementCount += 1;
+                randomBlock(bs, block);
+                blocks.push(block);
+            }
+            return Switch(exp, cases, blocks);
+        }
+        else {
+            var exp = randomExpressionOfType(bs, out, GenTypeEnum(enm));
+            var cases = new Array<GenExpression>();
+            var blocks = new Array<Array<GenStatement>>();
+            var caseCount = (Random.random() % 10) + 1;
+            var alreadyCases = new haxe.ds.StringMap<Bool>();
+            while (caseCount-- > 0) {
+                var captures = new Array<{ name : String, type : GenType,
+                                           r : Bool, w : Bool }>();
+                var enum_exp = randomEnumCase(bs, out, enm, captures);
+                var s = GenExpressionHelpers.toString(enum_exp);
+                if (!alreadyCases.exists(s)) {
+                    alreadyCases.set(s, true);
+                    cases.push(enum_exp);
+                    var block = new Array<GenStatement>();
+                    if (captures.length > 0) {
+                        bs.captures.push(captures);
+                    }
+                    bs.statementCount += 1;
+                    randomBlock(bs, block);
+                    blocks.push(block);
+                    if (captures.length > 0) {
+                        bs.captures.pop();
+                    }
+                }
+            }
+            return Switch(exp, cases, blocks);
+        }
     }
 
     public static function randomAssignment(bs : BlockState, 
@@ -422,6 +486,48 @@ class GenStatementHelpers
             out.writeString("return (");
             GenExpressionHelpers.emit(exp, out);
             out.writeString(");\n");
+        case Switch(exp, cases, blocks):
+            out.writeString("switch (");
+            GenExpressionHelpers.emit(exp, out);
+            out.writeString(") {\n");
+            var i = 0;
+            while (i < cases.length) {
+                Util.indent(out, indent);
+                out.writeString("case ");
+                GenExpressionHelpers.emit(cases[i], out);
+                out.writeString(":\n");
+                var block = blocks[i++];
+                var j = 0;
+                while (j < block.length) {
+                    emit(block[j++], out, indent + 4);
+                }
+            }
+            Util.indent(out, indent);
+            out.writeString("default:\n");
+            Util.indent(out, indent);
+            out.writeString("}\n");
         }
+    }
+
+    private static function randomEnumCase
+        (bs : BlockState, out : Array<GenStatement>, enm : GenEnum,
+         captures : 
+         Array<{ name : String, type : GenType, r : Bool, w : Bool }>)
+            : GenExpression
+    {
+        var elem = enm.elements[Random.random() % enm.elements.length];
+        var args = new Array<GenExpression>();
+        if (elem.parameters != null) {
+            var i = 0;
+            while (i < elem.parameters.length) {
+                var name = "capture" + i;
+                // For now, just use a capture variable for everything
+                args.push(Variable(name));
+                captures.push({ name : name, type : elem.parameters[i].type,
+                                r : true, w : true });
+                i += 1;
+            }
+        }
+        return EnumMember(enm, elem, args);
     }
 }
