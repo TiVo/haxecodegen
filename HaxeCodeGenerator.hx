@@ -231,7 +231,27 @@ class HaxeCodeGenerator
         out.close();
 
         // Emit the build scripts
+        for (n in [ [ "js", ".js" ], [ "neko", ".n" ], [ "cpp", "-cpp" ],
+                    [ "java", "-java" ] ]) {
+            emitHxml(n[0], n[1]);
+        }
 
         return 0;
+    }
+
+    private static function emitHxml(target : String, suffix : String)
+    {
+        var path = Options.outdir + "/build_" + target + ".hxml";
+        var out = null;
+        try {
+            out = sys.io.File.write(path);
+        }
+        catch (e : Dynamic) {
+            Util.err("Failed to create file: " + path + ": " + e);
+            Sys.exit(-1);
+        }
+        out.writeString("-" + target + " Main" + suffix + "\n");
+        out.writeString("-main Main\n");
+        out.close();
     }
 }

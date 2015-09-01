@@ -69,6 +69,8 @@ class Options
                     anonymousClassCount = getIntArgument(argv, i, iter);
                 case "-me", "-maxExtendsDepth":
                     maxExtendsDepth = getIntArgument(argv, i, iter);
+                case "-sc", "-statementCount":
+                    statementCount = getIntArgument(argv, i, iter);
                 default:
                     Util.err("Unknown command-line argument: " + arg + "\n");
                     return false;
@@ -98,6 +100,10 @@ class Options
 
         if (maxExtendsDepth < 0) {
             Util.err("maxExtendsDepth must be positive");
+        }
+
+        if (statementCount < 0) {
+            Util.err("statementCount must be positive");
         }
 
         return true;
