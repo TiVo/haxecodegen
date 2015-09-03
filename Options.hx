@@ -37,6 +37,7 @@ class Options
     public static var usageString = "Usage: HaxeCodeGenerator " +
         "[-h/-help/--help]\n" +
         "                         [-rs/-randomSeed <seed>]\n" +
+        "                         [-o/-outdir <path>]\n" +
         "                         [-cc/-classCount <count>]\n" +
         "                         [-ic/-interfaceCount <count>]\n" +
         "                         [-ec/-enumCount <count>]\n" +
@@ -45,6 +46,7 @@ class Options
         "\n" +
         "Options:\n" +
         "-randomSeed: Set the random seed to use; defaults to current time\n" +
+        "-outdir: Set the output directory; defaults to \"gen.out\"\n" +
         "-classCount: Number of classes to generate; defaults to 3000\n" +
         "-interfaceCount: Number of interfaces to generate; defaults to " +
         "1750\n" +
@@ -73,6 +75,12 @@ class Options
                     help = true;
                     // Can stop now as no other options will matter
                     return true;
+                case "-o", "-outdir":
+                    if (i == (argv.length - 1)) {
+                        Util.err(argv[i] + " requires an argument");
+                        throw false;
+                    }
+                    outdir = argv[iter.next()];
                 case "-rs", "-randomSeed":
                     randomSeed = getIntArgument(argv, i, iter);
                 case "-cc", "-classCount":

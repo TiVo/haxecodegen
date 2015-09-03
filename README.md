@@ -49,3 +49,24 @@ generated code is:
 The generated code is pure haxe with no target-specific characteristics and
 thus should be applicable to evaluating every haxe target type (javascript,
 hxcpp, neko, etc).
+
+To use:
+
+haxe build-neko.hxml
+neko HaxeCodeGenerator.n [options]
+
+For help:
+
+neko HaxeCodeGenerator.n -help
+
+Basically, you use this program to generate a bunch of code into a gen.out
+directory, and then you compile that to whatever target you care to using
+the generated build .hxml files in the gen.out directory.
+
+Just compiling the generated code can provide useful metrics about the speed
+of compilation and the generated code size.
+
+You can run the generated program to test the speed of random execution of
+random Haxe statements, but currently the generated code will usually
+crash because it doesn't check for null objects before using them, which
+will (maybe) be fixed in the future.
