@@ -19,7 +19,7 @@ included.  At any time, if a language feature not included in this program
 is discovered to be worth inclusion, it can be added later.
 
 Currently, the set of language features that can be included in the
-generated code is:
+generated code is (except for TODO as noted):
 
 - classes (of various numbers, size, complexity, and inheritence and
            interface implementation characteristics)
@@ -29,22 +29,22 @@ generated code is:
 - anonymous classes
 - class properties (with various accessor/mutator types)
 - interface properties (with various accessor/mutator types)
-- templates
-- exception handling (try/catch/throw)
+- templates [TODO]
+- exception handling (try/catch/throw) [TODO]
 - Dynamic types (casting to/from, as well as setting values on/getting
-                 values from)
-- closures
-- functions with complex signatures, including varargs
+                 values from) [TODO casting, getting]
+- closures [TODO]
+- functions with complex signatures, including varargs [TODO varargs]
 - iterators (especially integer iterators, to gauge unnecessary churn)
 - switch pattern matching (simple and complex)
 - string literals
-- @:unreflective (to evaluate effectiveness)
-- @:unreflective inline (to evaluate effectiveness)
+- @:unreflective (to evaluate effectiveness) [TODO]
+- @:unreflective inline (to evaluate effectiveness) [TODO]
 - inline (to evaluate resulting code size)
-- Array class
-- Map class
-- Bytes and ByteData classes
-- EReg class
+- Array class [TODO]
+- Map class [TODO]
+- Bytes and ByteData classes [TODO]
+- EReg class [TODO]
 
 The generated code is pure haxe with no target-specific characteristics and
 thus should be applicable to evaluating every haxe target type (javascript,
