@@ -70,3 +70,7 @@ You can run the generated program to test the speed of random execution of
 random Haxe statements, but currently the generated code will usually
 crash because it doesn't check for null objects before using them, which
 will (maybe) be fixed in the future.
+
+** By the way this code is ugly and awful and was hacked together quickly just
+   to serve an immediate need, sorry about that! **
+
