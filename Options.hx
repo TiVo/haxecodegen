@@ -29,14 +29,30 @@ class Options
     public static var interfaceCount : Int = 1750;
     // Number of enums to generate
     public static var enumCount : Int = 200;
-    // Number of anonymous classes to generate
-    public static var anonymousClassCount : Int = 15;
     // Maximum class/interface hierarchy depth
     public static var maxExtendsDepth : Int = 10;
     // Number of statements for the resulting program to run
-    public static var statementCount : Int = 1000000; // default 
+    public static var statementCount : Int = 1000000;
 
-    public static var usageString = "Usage: ";
+    public static var usageString = "Usage: HaxeCodeGenerator " +
+        "[-h/-help/--help]\n" +
+        "                         [-rs/-randomSeed <seed>]\n" +
+        "                         [-cc/-classCount <count>]\n" +
+        "                         [-ic/-interfaceCount <count>]\n" +
+        "                         [-ec/-enumCount <count>]\n" +
+        "                         [-me/-maxExtendsDepth <depth>]\n" +
+        "                         [-sc/-statementCount <count>]\n" +
+        "\n" +
+        "Options:\n" +
+        "-randomSeed: Set the random seed to use; defaults to current time\n" +
+        "-classCount: Number of classes to generate; defaults to 3000\n" +
+        "-interfaceCount: Number of interfaces to generate; defaults to " +
+        "1750\n" +
+        "-enumCount: Number of enums to generate; defaults to 200\n" +
+        "-maxExtendsDepth: Maximum depth of any class inheritence or\n" +
+        "                  interface inheritence hierarchy; defaults to 10\n" +
+        "-statementCount: Number of statements for the generated program\n" +
+        "                 to run; defaults to 1000000\n";
 
     /**
      * This method parses the command line options, storing the parsed values
@@ -65,8 +81,6 @@ class Options
                     interfaceCount = getIntArgument(argv, i, iter);
                 case "-ec", "-enumCount":
                     enumCount = getIntArgument(argv, i, iter);
-                case "-ac", "-anonymousClassCount":
-                    anonymousClassCount = getIntArgument(argv, i, iter);
                 case "-me", "-maxExtendsDepth":
                     maxExtendsDepth = getIntArgument(argv, i, iter);
                 case "-sc", "-statementCount":
@@ -92,10 +106,6 @@ class Options
 
         if (enumCount < 0) {
             Util.err("enumCount must be positive");
-        }
-
-        if (anonymousClassCount < 0) {
-            Util.err("anonymousClassCount must be positive");
         }
 
         if (maxExtendsDepth < 0) {
