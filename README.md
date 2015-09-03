@@ -23,7 +23,7 @@ generated code is (except for TODO as noted):
 
 - classes (of various numbers, size, complexity, and inheritence and
            interface implementation characteristics)
-- interfacees (of various numbers, size, complexity, and inheritence
+- interfaces (of various numbers, size, complexity, and inheritence
                characteristics)
 - enums (of of various numbers, size, and complexity)
 - anonymous classes
@@ -53,6 +53,7 @@ hxcpp, neko, etc).
 To use:
 
 haxe build-neko.hxml
+
 neko HaxeCodeGenerator.n [options]
 
 For help:
