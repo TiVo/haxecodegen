@@ -42,17 +42,17 @@ class GenInterface
         }
         
         for (geninterface in gInterfaces) {
-            // 30% chance of inheriting from an existing class
-            if (!Random.chance(30)) {
+            // 40% chance of inheriting from an existing interface
+            if (!Random.chance(40)) {
                 continue;
             }
             // Extend one
             geninterface.extendRandom();
-            // Now two more 25% chances to extend others
-            if (Random.chance(25)) {
+            // Now two more 33% chances to extend others
+            if (Random.chance(33)) {
                 geninterface.extendRandom();
             }
-            if (Random.chance(25)) {
+            if (Random.chance(33)) {
                 geninterface.extendRandom();
             }
         }
@@ -192,6 +192,13 @@ class GenInterface
                 return;
             }
             this._extends.push(toExtend);
+            // 75% chance of adding a property to toExtend, this is to create
+            // large interface property hierarchies which are known to cause
+            // large increases in code size in the hxcpp target of the 3.2
+            // compiler
+            if (Random.chance(75)) {
+                toExtend.properties.push(new GenField(null, true));
+            }
             if (toExtend.maxdepth >= this.maxdepth) {
                 this.maxdepth = toExtend.maxdepth + 1;
             }
@@ -240,7 +247,19 @@ class GenInterface
 
     private function createThisProperties()
     {
-        var pct = 10;
+        // Not every interface has properties
+        if (Random.chance(75)) {
+            return;
+        }
+
+        // Start with between 0 and 20 properties
+        var count = Random.random() % 20;
+        while (count-- > 0) {
+            this.properties.push(new GenField(null, true));
+        }
+
+        // Now add in some more
+        var pct = 50;
         while (Random.chance(pct)) {
             pct = Std.int((pct * 9) / 10);
             this.properties.push(new GenField(null, true));

@@ -380,7 +380,8 @@ class GenClass
 
         // Collect properties to implement
         var props = new Array<GenField>();
-        this.collectPropertiesToImplement(this._implements, props);
+        var already = new haxe.ds.StringMap<Bool>();
+        this.collectPropertiesToImplement(this._implements, already, props);
 
         // Now emit all interface property definitions as needed
         for (p in props) {
@@ -444,7 +445,8 @@ class GenClass
     }
 
     private function collectPropertiesToImplement
-        (implemented : Array<GenInterface>, out : Array<GenField>)
+        (implemented : Array<GenInterface>, already : haxe.ds.StringMap<Bool>,
+         out : Array<GenField>)
     {
         for (i in implemented) {
             // If there is not a superclass implementing this interface, then
@@ -452,10 +454,13 @@ class GenClass
             if ((this._super == null) ||
                 !this._super.implementsInterface(i)) {
                 for (p in i.properties) {
-                    out.push(p);
+                    if (!already.exists(p.name)) {
+                        already.set(p.name, true);
+                        out.push(p);
+                    }
                 }
             }
-            this.collectPropertiesToImplement(i._extends, out);
+            this.collectPropertiesToImplement(i._extends, already, out);
         }
     }
 
